@@ -11,6 +11,11 @@ scalacOptions ++= Seq("-optimize", "-unchecked", "-deprecation", "-feature")
 
 crossScalaVersions := Seq("2.10.4", "2.11.1")
 
+libraryDependencies ++= Seq(
+  "org.scalacheck" %% "scalacheck" % "1.11.4" % "test",
+  "org.scalatest" %% "scalatest" % "2.1.7" % "test"
+)
+
 publishTo := {
   val repo = url("http://ivy.rgmadvisors.com:8081/artifactory/" + (if (isSnapshot.value) "libs-snapshot-local" else "libs-release-local"))
   Some(Resolver.url("rgm", repo)(Resolver.ivyStylePatterns))
