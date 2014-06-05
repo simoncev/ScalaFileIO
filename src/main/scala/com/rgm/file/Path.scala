@@ -161,9 +161,16 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // should behave like JPath.resolveSibling except that `other` should always be treated as a relative path
   // (for consistency with resolve). the NIO implementation also seems dubious when `this` is the root or when `this`
   // has no parent and `other` is on a different file system
-  def sibling(other: Path): Path = jpath.resolveSibling(other.toString)
+  def sibling(other: Path): Path = sibling(other.path)
 
-  def sibling(other: String): Path = jpath.resolveSibling(other)
+  def sibling(other: String): Path =
+    if (segmentCount > 1)
+      jpath.resolveSibling(other)
+    else if (Path(other).isAbsolute)
+      Path("/").resolve(other)
+    else
+      other
+
 
   //--------------------------------------------------------------------------------------------------------------------
 
