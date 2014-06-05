@@ -1,6 +1,6 @@
 package com.rgm.file
-
 import org.scalacheck._
+
 import org.scalatest._
 
 /**
@@ -9,6 +9,7 @@ import org.scalatest._
 object PathSpec extends Properties("Path")
 {
   import Prop._
+  import Generators._
 
   /*
   //properties for path function
@@ -43,7 +44,7 @@ object PathSpec extends Properties("Path")
 */
 
   // sibling, both string and path
-  property("Sibling has same parent (called with Path)") =  Path("/foo/bar").sibling(Path("foo")).parent == Path("/foo/bar").parent
+  property("Sibling has same parent (called with Path)") =  forAll {(p: Path, q: Path) => p.sibling(q).parent == p.parent }
 
   property("Siblings are both absolute/both relative (called with Path)") = Path("/foo/bar").isAbsolute == Path("/foo/bar").sibling(Path("foo")).isAbsolute
 
