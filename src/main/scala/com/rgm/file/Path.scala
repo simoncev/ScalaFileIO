@@ -150,7 +150,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     if(other.isAbsolute)
       Path(path + "/" + other.relativeTo(other.root.get))
     else
-      Path(path + "/" + other.path)
+      Path(jpath.resolve(other.jpath))
   }
 
   // as above
@@ -166,12 +166,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def sibling(other: Path): Path = sibling(other.path)
 
   def sibling(other: String): Path =
-    if (segmentCount > 1)
-      jpath.resolveSibling(other)
-    else if (Path(other).isAbsolute)
-      Path("/").resolve(other)
-    else
-      other
+    parent.get.resolve(other)
+//    if (segmentCount > 1)
+//      jpath.resolveSibling(other)
+//    else if (isAbsolute)
+//      Path("/").resolve(other)
+//    else
+//      other
 
 
   //--------------------------------------------------------------------------------------------------------------------
