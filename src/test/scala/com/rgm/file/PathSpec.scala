@@ -46,15 +46,15 @@ object PathSpec extends Properties("Path")
   // sibling, both string and path
   property("Sibling has same parent (called with Path)") =  forAll {(p: Path, q: Path) => p.sibling(q).parent == p.parent }
 
-  property("Siblings are both absolute/both relative (called with Path)") = Path("/foo/bar").isAbsolute == Path("/foo/bar").sibling(Path("foo")).isAbsolute
+  property("Siblings are both absolute/both relative (called with Path)") = forAll {(p: Path, q: Path) => p.isAbsolute == p.sibling(q).isAbsolute }
 
-  property("Sibling has same parent (called with String)") =  Path("/foo/bar").sibling(Path("foo")).parent == Path("/foo/bar").parent
+  property("Sibling has same parent (called with String)") =  forAll {(p: Path, q: String) => p.sibling(q).parent == p.parent }
 
   property("Siblings are both absolute/both relative (called with String)") = Path("/foo/bar").isAbsolute == Path("/foo/bar").sibling(Path("foo")).isAbsolute
 
   // resolve, both string and path
 
-  property("Resolved path at least as long as each original paths") = 1 ==2
+/*  property("Resolved path at least as long as each original paths") = 1 ==2
 
   property("Resolved path shorter than or equal to path1.segmentCount + path2.segmentCount") = 1 == 2
 
@@ -125,6 +125,6 @@ object PathSpec extends Properties("Path")
   property("") = 1 == 2
 
 
-
+*/
 
 }
