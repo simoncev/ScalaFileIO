@@ -58,10 +58,12 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def withExtension(extension: Option[String]): Path =
   {
-    if(segments.last.toString.count(_ == '.') == 1 && !extension.isEmpty)
-       segments.init.mkString("/").concat("/").concat(segments.last.toString.split('.')(0).concat(extension.get.toString))
+    if(extension.isEmpty)
+      path
+    else if(segments.last.toString.charAt(0).equals('.'))
+      segments.init.mkString("/").concat("/").concat(segments.last.toString.concat(extension.get.toString))
     else
-      segments.init.mkString("/").concat("/").concat(segments.last.toString.split('.')(0))
+      segments.init.mkString("/").concat("/").concat(segments.last.toString.split('.').init.mkString(".").concat(extension.get.toString))
   }
 
   // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
@@ -88,12 +90,12 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       Option(Path(".."))
     else if(path.equalsIgnoreCase("/"))
       Option(Path("/"))
-    else if (path.count(_ == '/') == 0)
-      Option(Path(path))
+    else if (segmentIterator.forall(k => k.toString.equals("..")))
+      Option(Path(segments.mkString("/").concat("/..")))
+    else if ((path.count(_ == '/') == 0 || path.count(_ == '/') == 1) && segmentCount == 1)
+      Option(Path("."))
     else
-    {
       Option(jpath.normalize.getParent).map(Path(_))
-    }
   }
 
   def subpath(begin: Int, end: Int): Path = Path(jpath.subpath(begin, end))
