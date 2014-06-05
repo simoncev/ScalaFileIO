@@ -4,6 +4,7 @@ import java.io.{File => JFile}
 import java.net.{URI, URL}
 import java.nio.file.{Path => JPath, Paths, Files, LinkOption}
 import scala.language.implicitConversions
+import scala.collection.JavaConverters._
 
 object Path {
   def apply(jpath: JPath): Path = new Path(jpath)
@@ -40,28 +41,40 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  def fileSystem: FileSystem = ???
+  def fileSystem: FileSystem = jpath.getFileSystem
 
   def path: String = toString
 
-  def name: String = ???
+  def name: String = toString
 
-  def simpleName: String = ???
+  //last most segment without extension
+  def simpleName: String = if(segments.last.toString.count(_ == '.') == 1 ) segments.last.toString.split('.')(0) else ""
 
-  def extension: Option[String] = ???
 
-  def withExtension(extension: Option[String]): Path = ???
+  def extension: Option[String] = name.lastIndexWhere (_ == '.') match {
+    case idx if idx != -1 => Some(name.drop(idx))
+    case _ => None
+  }
+
+  def withExtension(extension: Option[String]): Path =
+  {
+    if(segments.last.toString.count(_ == '.') == 1 && !extension.isEmpty)
+       segments.init.mkString("/").concat("/").concat(segments.last.toString.split('.')(0).concat(extension.get.toString))
+    else
+      segments.init.mkString("/").concat("/").concat(segments.last.toString.split('.')(0))
+  }
 
   // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
-  def segments: Seq[Path] = ???
+  def segments: Seq[Path] = path.split("/").map(_.concat("/")).map(Path(_))
+
 
   // just like segments
-  def segmentIterator: Iterator[Path] = ???
+  def segmentIterator: Iterator[Path] =  segments.iterator
 
   // again, should count the root segment, if any
-  def segmentCount: Int = ???
+  def segmentCount: Int = segments.size
 
-  def root: Option[Path] = ???
+  def root: Option[Path] = Option(jpath.getRoot).map(Path(_))
 
   // there is a good argument for having this method always return an unwrapped (non-null) Path. For example:
   //   Path("a").parent == Path("") or Path(".")
@@ -69,50 +82,77 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //   Path("..").parent == Path("../..")
   //   Path("/").parent == Path("/")
   // is this sensible, or does it present serious problems? it would certainly be convenient.
-  def parent: Option[Path] = ???
+  def parent: Option[Path] =
+  {
+    if(path.equals(""))
+      Option(Path(".."))
+    else if(path.equalsIgnoreCase("/"))
+      Option(Path("/"))
+    else if (path.count(_ == '/') == 0)
+      Option(Path(path))
+    else
+    {
+      Option(jpath.normalize.getParent).map(Path(_))
+    }
+  }
 
-  def subpath(begin: Int, end: Int): Path = ???
+  def subpath(begin: Int, end: Int): Path = Path(jpath.subpath(begin, end))
 
-  def startsWith(other: Path): Boolean = ???
+  def startsWith(other: Path): Boolean = jpath.startsWith(other)
 
-  def startsWith(other: String): Boolean = ???
+  def startsWith(other: String): Boolean = jpath.startsWith(Paths.get(other))
 
-  def endsWith(other: Path): Boolean = ???
+  def endsWith(other: Path): Boolean = jpath.endsWith(other)
 
-  def endsWith(other: String): Boolean = ???
+  def endsWith(other: String): Boolean = jpath.endsWith(Paths.get(other))
 
-  def isAbsolute: Boolean = ???
+  def isAbsolute: Boolean = jpath.isAbsolute
 
-  def toAbsolute: Path = ???
+  //this can't be syntactic function, needs to search filesystem for absolute path
+  def toAbsolute: Path = Path(jpath.toAbsolutePath)
 
   // should behave mostly like JPath.normalize but should correctly handle the empty path
   // (N.B. the scalax implementation is wrong too--the operation should be idempotent).
-  def normalize: Path = ???
+  def normalize: Path =
+  {
+    if(jpath.toString.equals("")) {
+      return ""
+    }
+    else
+      Path(jpath.normalize)
+  }
 
-  def toRealPath(options: LinkOption*): Path = ???
+  def toRealPath(options: LinkOption*): Path = Path(jpath.toRealPath(options : _*))
 
-  def toURI: URI = ???
+  def toURI: URI = jpath.toUri
 
-  def toURL: URL = ???
+  def toURL: URL = toURI.toURL
 
   def jfile: JFile = jpath.toFile
 
   // should behave like JPath.relativize (the scalax implementation is backwards and broken)
-  def relativize(other: Path): Path = ???
+  def relativize(other: Path): Path = jpath.relativize(other.jpath)
 
-  def relativize(other: String): Path = ???
+  def relativize(other: String): Path = jpath.relativize(Paths.get(other))
+
 
   def relativeTo(base: Path): Path = base.relativize(this)
 
-  def relativeTo(base: String): Path = ???
+  def relativeTo(base: String): Path = jpath.relativize(Paths.get(base))
 
   // should behave like JPath.resolve except when `other` is an absolute path, in which case in should behave as if
   // `other` were actually a relative path (i.e. `other.relativeTo(other.root.get)`)
   // this is so that `path1 / path2` behaves exactly like `Path(path1.path + "/" + path2.path)`
-  def resolve(other: Path): Path = ???
+  def resolve(other: Path): Path =
+  {
+    if(other.isAbsolute)
+      Path(path + "/" + other.relativeTo(other.root.get))
+    else
+      Path(path + "/" + other.path)
+  }
 
   // as above
-  def resolve(other: String): Path = ???
+  def resolve(other: String): Path = resolve(Path(other))
 
   def / (other: Path): Path = resolve(other)
 
@@ -121,37 +161,37 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // should behave like JPath.resolveSibling except that `other` should always be treated as a relative path
   // (for consistency with resolve). the NIO implementation also seems dubious when `this` is the root or when `this`
   // has no parent and `other` is on a different file system
-  def sibling(other: Path): Path = ???
+  def sibling(other: Path): Path = jpath.resolveSibling(other.toString)
 
-  def sibling(other: String): Path = ???
+  def sibling(other: String): Path = jpath.resolveSibling(other)
 
   //--------------------------------------------------------------------------------------------------------------------
 
   def exists: Boolean = Files.exists(jpath)
 
-  def exists(options: LinkOption*): Boolean = ???
+  def exists(options: LinkOption*): Boolean = Files.exists(jpath.toRealPath(options :_*))
 
   def nonExistent: Boolean = Files.notExists(jpath) // not equivalent to `!exists`
 
-  def nonExistent(options: LinkOption*): Boolean = ???
+  def nonExistent(options: LinkOption*): Boolean = Files.notExists(jpath.toRealPath(options : _*))
 
-  def isSame(other: Path): Boolean = ???
+  def isSame(other: Path): Boolean = normalize == other.normalize
 
-  def size: Option[Long] = ???
+  def size: Option[Long] = Option(Files.size(jpath.toAbsolutePath))
 
-  def isDirectory: Boolean = ???
+  def isDirectory: Boolean = Files.isDirectory(jpath.toAbsolutePath)
 
-  def isFile: Boolean = ??? // == isRegularFile
+  def isFile: Boolean = Files.isRegularFile(jpath.toAbsolutePath) // == isRegularFile
 
-  def isSymLink: Boolean = ???
+  def isSymLink: Boolean = Files.isSymbolicLink(jpath.toAbsolutePath)
 
-  def isHidden: Boolean = ???
+  def isHidden: Boolean = Files.isHidden(jpath.toAbsolutePath)
 
-  def isReadable: Boolean = ???
+  def isReadable: Boolean = Files.isReadable(jpath.toAbsolutePath)
 
-  def isWritable: Boolean = ???
+  def isWritable: Boolean = Files.isWritable(jpath.toAbsolutePath)
 
-  def isExecutable: Boolean = ???
+  def isExecutable: Boolean = Files.isExecutable(jpath.toAbsolutePath)
 
   // etc.
 
