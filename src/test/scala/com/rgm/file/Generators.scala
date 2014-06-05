@@ -11,11 +11,15 @@ object Generators {
 
   implicit val arbPath: Arbitrary[Path] = Arbitrary(genPath)
 
-  val genPath: Gen[Path] = arbitrary[String].map(str => Path(str))//Gen.alphaStr.map(str => Path(str))
+  val genPath: Gen[Path] = Gen.alphaStr.map(str => Path(str)) //arbitrary[String].map(str => Path(str))
 
- // val genPathString: Gen[String] = Gen.someOf
+//  val genPath2: Gen[Path] = genPathStrings.map(dirs => dirs.mkString("/"))
+
+  val genPathStrings: Gen[Seq[String]] = Gen.someOf(genString, genString)
 
   val genString: Gen[String] = arbitrary[String]
+
+//  val genFileDelimiter: Gen[String] = "/"
 
 
 }
