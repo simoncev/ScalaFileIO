@@ -1,8 +1,12 @@
 package com.rgm
 
+
+import java.nio.file.{FileSystem => JFileSystem, WatchService, FileStore}
+import scala.collection.JavaConverters._
+import java.nio.file.attribute.UserPrincipalLookupService
+import java.nio.file.spi.FileSystemProvider
+
 package object file {
 
-  // add a wrapper class for this (with a scala-like interface) instead of just an alias
-  type FileSystem = java.nio.file.FileSystem
 
 }
