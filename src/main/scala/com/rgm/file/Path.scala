@@ -84,26 +84,15 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //   Path("..").parent == Path("../..")
   //   Path("/").parent == Path("/")
   // is this sensible, or does it present serious problems? it would certainly be convenient.
+  // this breaks on ".." vs "../.." and "." and becomes inconsistent...
 
-  def parent: Option[Path] =
-  {
-    if(path.equals("") || path.equals("."))
-      Option(Path(".."))
-    else if(path.equalsIgnoreCase("/"))
-      Option(Path("/"))
-    else if (segmentIterator.forall(k => k.toString.equals("..")))
-      Option(Path(segments.mkString("/").concat("/..")))
-    else if ((path.count(_ == '/') == 0 || path.count(_ == '/') == 1) && segmentCount == 1)
-      Option(Path("."))
-    else
-      Option(jpath.getParent)
-  }
+  def parent: Option[Path] = if (jpath.getParent == null) Option(null) else Option(Path(jpath.getParent))
 
   def subpath(begin: Int, end: Int): Path = Path(jpath.subpath(begin, end))
 
-  def startsWith(other: Path): Boolean = jpath.startsWith(other)
+  def startsWith(other: Path): Boolean = jpath.startsWith(other.jpath)
 
-  def startsWith(other: String): Boolean = jpath.startsWith(fileSystem.path(other))
+  def startsWith(other: String): Boolean = jpath.startsWith(fileSystem.path(other).jpath)
 
   def endsWith(other: Path): Boolean = jpath.endsWith(other)
 
@@ -163,16 +152,15 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // should behave like JPath.resolveSibling except that `other` should always be treated as a relative path
   // (for consistency with resolve). the NIO implementation also seems dubious when `this` is the root or when `this`
   // has no parent and `other` is on a different file system
-  def sibling(other: Path): Path = sibling(other.path)
+  def sibling(other: Path): Path = {
+    val sibl : Path = if (other.isAbsolute) Path(other.path.substring(1)) else other
+    if (this.equals(Path("/")))
+      fileSystem.path("/.").jpath.resolveSibling(sibl.path)
+    else
+      jpath.resolveSibling(sibl.path)
+  }
 
-  def sibling(other: String): Path =
-    parent.get.resolve(other)
-//    if (segmentCount > 1)
-//      jpath.resolveSibling(other)
-//    else if (isAbsolute)
-//      Path("/").resolve(other)
-//    else
-//      other
+    def sibling(other: String): Path = sibling(Path(other))
 
 
   //--------------------------------------------------------------------------------------------------------------------
