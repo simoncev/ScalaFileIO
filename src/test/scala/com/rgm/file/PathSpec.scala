@@ -44,16 +44,25 @@ object PathSpec extends Properties("Path")
 */
 
   // sibling, both string and path
-  property("Sibling has same parent (called with Path)") =  forAll { (p: Path, q: Path) => (p.parent == None) || (p.sibling(q).startsWith(p.parent.get)) }
+  property("Sibling has same parent (called with Path)") =
+    forAll { (p: Path, q: Path) => (p.parent == None) || (p.sibling(q).startsWith(p.parent.get)) }
 
-  property("Siblings are both absolute/both relative (called with Path)") = forAll {(p: Path, q: Path) => p.isAbsolute == p.sibling(q).isAbsolute }
+  property("Siblings are both absolute/both relative (called with Path)") =
+    forAll {(p: Path, q: Path) => p.isAbsolute == p.sibling(q).isAbsolute }
 
-  property("Sibling has same parent (called with String)") =  forAll {(p: Path, q: String) => (p.parent == None) || (p.sibling(q).startsWith(p.parent.get))}
+  property("Sibling has same parent (called with String)") =
+    forAll {(p: Path, q: String) => (p.parent == None) || (p.sibling(q).startsWith(p.parent.get))}
 
-  property("Siblings are both absolute/both relative (called with String)") = Path("/foo/bar").isAbsolute == Path("/foo/bar").sibling(Path("foo")).isAbsolute
-/*
+  property("Siblings are both absolute/both relative (called with String)") =
+    Path("/foo/bar").isAbsolute == Path("/foo/bar").sibling(Path("foo")).isAbsolute
+
   // resolve, both string and path
 
+  property("If path2 is absolute, length of resolved path is path1.segmentCount + path2.segmentCount - 1") =
+    forAll(genPath, genAbsolutePath) {
+      (path1: Path, path2: Path) => path1.resolve(path2).segmentCount == path1.segmentCount + path2.segmentCount - 1
+  }
+/*
   property("Resolved path at least as long as each original paths") = forAll {(p: Path, q: Path) => p.resolve(q).segmentCount >= p.segmentCount }
 
   property("Resolved path shorter than or equal to path1.segmentCount + path2.segmentCount") = forAll {(p: Path, q: Path) => p.resolve(q).segmentCount <= (p.segmentCount + q.segmentCount) }
