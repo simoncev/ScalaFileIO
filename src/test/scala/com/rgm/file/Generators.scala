@@ -9,17 +9,16 @@ import org.scalacheck.Gen._
 object Generators {
   import Arbitrary.arbitrary
 
+
+  val genLegalString: Gen[String] = Gen.alphaStr
+
+  val genPathStrings: Gen[List[String]] = Gen.listOf(genLegalString)
+
+  val genPath: Gen[Path] = genPathStrings.map(str => Path(str.mkString("/")))
+
   implicit val arbPath: Arbitrary[Path] = Arbitrary(genPath)
 
-  val genPath: Gen[Path] = Gen.alphaStr.map(str => Path(str)) //arbitrary[String].map(str => Path(str))
-
-//  val genPath2: Gen[Path] = genPathStrings.map(dirs => dirs.mkString("/"))
-
-  val genPathStrings: Gen[Seq[String]] = Gen.someOf(genString, genString)
-
-  val genString: Gen[String] = arbitrary[String]
-
-//  val genFileDelimiter: Gen[String] = "/"
+  //  val genFileDelimiter: Gen[String] = "/"
 
 
 }

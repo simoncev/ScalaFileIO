@@ -41,7 +41,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  def fileSystem: FileSystem = jpath.getFileSystem
+  def fileSystem: FileSystem = FileSystem(jpath.getFileSystem)
 
   def path: String = toString
 
@@ -84,9 +84,10 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //   Path("..").parent == Path("../..")
   //   Path("/").parent == Path("/")
   // is this sensible, or does it present serious problems? it would certainly be convenient.
+
   def parent: Option[Path] =
   {
-    if(path.equals(""))
+    if(path.equals("") || path.equals("."))
       Option(Path(".."))
     else if(path.equalsIgnoreCase("/"))
       Option(Path("/"))
@@ -95,18 +96,18 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     else if ((path.count(_ == '/') == 0 || path.count(_ == '/') == 1) && segmentCount == 1)
       Option(Path("."))
     else
-      Option(jpath.normalize.getParent).map(Path(_))
+      Option(jpath.getParent)
   }
 
   def subpath(begin: Int, end: Int): Path = Path(jpath.subpath(begin, end))
 
   def startsWith(other: Path): Boolean = jpath.startsWith(other)
 
-  def startsWith(other: String): Boolean = jpath.startsWith(Paths.get(other))
+  def startsWith(other: String): Boolean = jpath.startsWith(fileSystem.path(other))
 
   def endsWith(other: Path): Boolean = jpath.endsWith(other)
 
-  def endsWith(other: String): Boolean = jpath.endsWith(Paths.get(other))
+  def endsWith(other: String): Boolean = jpath.endsWith(fileSystem.path(other))
 
   def isAbsolute: Boolean = jpath.isAbsolute
 
@@ -135,12 +136,11 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // should behave like JPath.relativize (the scalax implementation is backwards and broken)
   def relativize(other: Path): Path = jpath.relativize(other.jpath)
 
-  def relativize(other: String): Path = jpath.relativize(Paths.get(other))
-
+  def relativize(other: String): Path = jpath.relativize(fileSystem.path(other))
 
   def relativeTo(base: Path): Path = base.relativize(this)
 
-  def relativeTo(base: String): Path = jpath.relativize(Paths.get(base))
+  def relativeTo(base: String): Path = jpath.relativize(fileSystem.path(base))
 
   // should behave like JPath.resolve except when `other` is an absolute path, in which case in should behave as if
   // `other` were actually a relative path (i.e. `other.relativeTo(other.root.get)`)
