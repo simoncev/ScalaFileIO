@@ -67,7 +67,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   }
 
   // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
-  def segments: Seq[Path] = path.split("/").map(_.concat("/")).map(Path(_))
+  def segments: Seq[Path] = if (isAbsolute) path.concat("/").split("/").map(_.concat("/")).map(Path(_)) else path.split("/").map(_.concat("/")).map(Path(_))
 
 
   // just like segments
