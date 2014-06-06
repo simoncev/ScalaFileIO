@@ -83,7 +83,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   }
 
   // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
-  def segments: Seq[Path] = if (isAbsolute) path.concat("/").split("/").map(_.concat("/")).map(Path(_)) else path.split("/").map(_.concat("/")).map(Path(_))
+  def segments: Seq[Path] = path.split("/").map(_.concat("/")).map(Path(_))
 
 
   // just like segments
@@ -100,7 +100,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //   Path("..").parent == Path("../..")
   //   Path("/").parent == Path("/")
   // is this sensible, or does it present serious problems? it would certainly be convenient.
-<<<<<<< HEAD
+  <<<<<<< HEAD
   def parent: Option[Path] = Option(Path(jpath).resolve("..").normalize)
   /*{
     if(path.equals(""))
@@ -114,11 +114,11 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     else
       Option(jpath.normalize.getParent).map(Path(_))
   }*/
-=======
+  =======
   // this breaks on ".." vs "../.." and "." and becomes inconsistent...
 
   def parent: Option[Path] = if (jpath.getParent == null) Option(null) else Option(Path(jpath.getParent))
->>>>>>> 655994bde07f2bde81d89bd05f9e5b949dcdb742
+  >>>>>>> 655994bde07f2bde81d89bd05f9e5b949dcdb742
 
   def subpath(begin: Int, end: Int): Path = Path(jpath.subpath(begin, end))
 
@@ -192,7 +192,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       jpath.resolveSibling(sibl.path)
   }
 
-    def sibling(other: String): Path = sibling(Path(other))
+  def sibling(other: String): Path = sibling(Path(other))
 
 
   //--------------------------------------------------------------------------------------------------------------------
