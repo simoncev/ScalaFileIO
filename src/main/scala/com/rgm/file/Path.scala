@@ -150,7 +150,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def relativeTo(base: Path): Path = base.relativize(this)
 
-  def relativeTo(base: String): Path = jpath.relativize(fileSystem.path(base))
+  def relativeTo(base: String): Path = fileSystem.path(base).relativize(this)
 
   // should behave like JPath.resolve except when `other` is an absolute path, in which case in should behave as if
   // `other` were actually a relative path (i.e. `other.relativeTo(other.root.get)`)

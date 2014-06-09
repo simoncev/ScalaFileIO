@@ -94,60 +94,73 @@ object PathSpec extends Properties("Path")
   property("/ path's name is prefixed path1's name") =
     forAll {(p: Path, q: Path) => if (!p.equals(Path(""))) (p / q).startsWith(p) else true }
 
-  /*
+  property("If path2 is absolute, length of / path is path1.segmentCount + path2.segmentCount - 1 (with string)") =
+    forAll(genPath, genAbsolutePathStrings) {
+      (path1: Path, path2: String) => (path1 / path2).segmentCount == path1.segmentCount + Path(path2).segmentCount - 1
+    }
+  property("Resolved path is absolute iff path1 is absolute (with string)") =
+    forAll {(p: Path, q: String) => p.isAbsolute == (p / q).isAbsolute }
+
+  property("Resolved path's name is prefixed path1's name (with string)") =
+    forAll {(p: Path, q: String) => if (!p.equals(Path(""))) (p / q).startsWith(p) else true }
+
+
     // relativeTo, both string and path
-    property("relativeTo is never absolute") = 1 == 2
+    property("relativeTo is never absolute") =
+      forAll {(p: Path, q: Path) => !(p relativeTo q).isAbsolute}
 
-    property("relativeTo test for absolute/relative, relative/absolute") = 1 == 2
+    property("relativeTo empty when you are relativeTo yourself") =
+      forAll {(p: Path) => (p relativeTo p) equals Path("")}
 
-    property("relativeTo empty when you are relativeTo yourself") = 1 == 2
-
-    // relativize, both string and path
-    property("relativize is never absolute") = 1 == 2
-
-    property("relativize test for absolute/relative, relative/absolute") = 1 == 2
-
-    property("relativize empty when you are relativeTo yourself") = 1 == 2
-
-    // to URI and URL
-
-    property("toUri ends with the path's name") = 1 == 2
-
-    property("toUrl ends with the path's name") = 1 == 2
-
-    //jfile
-
-    //normalize
-
-    property("Normalized path does not contain a .. or a .") = 1 == 2
-
-    property("Normalized path is no longer than the original") = 1 == 2
-
-    property("Normalization is impossible between relative and absolute paths") = 1 == 2
-
-    // isAbsolute
-
-    property("First element is root iff isAbsolute") = 1 == 2
-
-    //toAbsolute
-
-    property("toAbsolute is at least as long as original path") = 1 == 2
-
-    property("toAbsolute makes a path isAbsolute") = 1 == 2
-
-    // endsWith, both string and path
-
-    property("") = 1 == 2
-
-    // startsWith, both string and path
-
-    property("All absolute paths start with root") = 1 == 2
-
-    //
-
-    property("") = 1 == 2
+/*    property("relativeTo test for absolute/relative, relative/absolute") = 1 == 2
 
 
-  */
+      // relativize, both string and path
+      property("relativize is never absolute") = 1 == 2
+
+      property("relativize test for absolute/relative, relative/absolute") = 1 == 2
+
+      property("relativize empty when you are relativeTo yourself") = 1 == 2
+
+      // to URI and URL
+
+      property("toUri ends with the path's name") = 1 == 2
+
+      property("toUrl ends with the path's name") = 1 == 2
+
+      //jfile
+
+      //normalize
+
+      property("Normalized path does not contain a .. or a .") = 1 == 2
+
+      property("Normalized path is no longer than the original") = 1 == 2
+
+      property("Normalization is impossible between relative and absolute paths") = 1 == 2
+
+      // isAbsolute
+
+      property("First element is root iff isAbsolute") = 1 == 2
+
+      //toAbsolute
+
+      property("toAbsolute is at least as long as original path") = 1 == 2
+
+      property("toAbsolute makes a path isAbsolute") = 1 == 2
+
+      // endsWith, both string and path
+
+      property("") = 1 == 2
+
+      // startsWith, both string and path
+
+      property("All absolute paths start with root") = 1 == 2
+
+      //
+
+      property("") = 1 == 2
+
+
+    */
 
 }
