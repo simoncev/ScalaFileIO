@@ -58,82 +58,96 @@ object PathSpec extends Properties("Path")
 
   // resolve, both string and path
 
-  property("If path2 is absolute, length of resolved path is path1.segmentCount + path2.segmentCount - 1") =
+  property("If path2 is absolute, length of resolved path is path1.segmentCount + path2.segmentCount - 1 (with path)") =
     forAll(genPath, genAbsolutePath) {
       (path1: Path, path2: Path) => path1.resolve(path2).segmentCount == path1.segmentCount + path2.segmentCount - 1
   }
-/*
-  property("Resolved path at least as long as each original paths") = forAll {(p: Path, q: Path) => p.resolve(q).segmentCount >= p.segmentCount }
+  property("Resolved path is absolute iff path1 is absolute (with path)") =
+    forAll {(p: Path, q: Path) => p.isAbsolute == p.resolve(q).isAbsolute }
 
-  property("Resolved path shorter than or equal to path1.segmentCount + path2.segmentCount") = forAll {(p: Path, q: Path) => p.resolve(q).segmentCount <= (p.segmentCount + q.segmentCount) }
+  property("Resolved path's name is prefixed path1's name (with path)") =
+    forAll {(p: Path, q: Path) => if (!p.equals(Path(""))) p.resolve(q).startsWith(p) else true }
 
-  property("Resolved path is absolute iff path1 is absolute") = forAll {(p: Path, q: Path) => p.isAbsolute == p.resolve(q).isAbsolute }
+  property("If path2 is absolute, length of resolved path is path1.segmentCount + path2.segmentCount - 1 (with string)") =
+    forAll(genPath, genAbsolutePathStrings) {
+      (path1: Path, path2: String) => path1.resolve(path2).segmentCount == path1.segmentCount + Path(path2).segmentCount - 1
+    }
+  property("Resolved path is absolute iff path1 is absolute (with string)") =
+    forAll {(p: Path, q: String) => p.isAbsolute == p.resolve(q).isAbsolute }
 
-  property("Resolved path's name is prefixed path1's name") = forAll {(p: Path, q: Path) => p.resolve(q).startsWith(p) }
+  property("Resolved path's name is prefixed path1's name (with string)") =
+    forAll {(p: Path, q: String) => if (!p.equals(Path(""))) p.resolve(q).startsWith(p) else true }
+
 
   // "/", both string and path
 
-  property("/ path at least as long as each original paths") = 1 ==2
 
-  property("/ path shorter than or equal to path1.segmentCount + path2.segmentCount") = 1 == 2
+  property("If path2 is absolute, length of / path is path1.segmentCount + path2.segmentCount - 1") =
+    forAll(genPath, genAbsolutePath) {
+      (path1: Path, path2: Path) => (path1 / path2).segmentCount == path1.segmentCount + path2.segmentCount - 1
+    }
 
-  property("/ path is absolute iff path1 is absolute") = 1 == 2
-
-  property("/ path's name is prefixed path1's name") = 1 == 2
-
-  // relativeTo, both string and path
-  property("relativeTo is never absolute") = 1 == 2
-
-  property("relativeTo test for absolute/relative, relative/absolute") = 1 == 2
-
-  property("relativeTo empty when you are relativeTo yourself") = 1 == 2
-
-  // relativize, both string and path
-  property("relativize is never absolute") = 1 == 2
-
-  property("relativize test for absolute/relative, relative/absolute") = 1 == 2
-
-  property("relativize empty when you are relativeTo yourself") = 1 == 2
-
-  // to URI and URL
-
-  property("toUri ends with the path's name") = 1 == 2
-
-  property("toUrl ends with the path's name") = 1 == 2
-
-  //jfile
-
-  //normalize
-
-  property("Normalized path does not contain a .. or a .") = 1 == 2
-
-  property("Normalized path is no longer than the original") = 1 == 2
-
-  property("Normalization is impossible between relative and absolute paths") = 1 == 2
-
-  // isAbsolute
-
-  property("First element is root iff isAbsolute") = 1 == 2
-
-  //toAbsolute
-
-  property("toAbsolute is at least as long as original path") = 1 == 2
-
-  property("toAbsolute makes a path isAbsolute") = 1 == 2
-
-  // endsWith, both string and path
-
-  property("") = 1 == 2
-
-  // startsWith, both string and path
-
-  property("All absolute paths start with root") = 1 == 2
-
-  //
-
-  property("") = 1 == 2
+  property("/ path is absolute iff path1 is absolute") =
+      forAll {(p: Path, q: Path) => p.isAbsolute == (p / q).isAbsolute }
 
 
-*/
+  property("/ path's name is prefixed path1's name") =
+    forAll {(p: Path, q: Path) => if (!p.equals(Path(""))) (p / q).startsWith(p) else true }
+
+  /*
+    // relativeTo, both string and path
+    property("relativeTo is never absolute") = 1 == 2
+
+    property("relativeTo test for absolute/relative, relative/absolute") = 1 == 2
+
+    property("relativeTo empty when you are relativeTo yourself") = 1 == 2
+
+    // relativize, both string and path
+    property("relativize is never absolute") = 1 == 2
+
+    property("relativize test for absolute/relative, relative/absolute") = 1 == 2
+
+    property("relativize empty when you are relativeTo yourself") = 1 == 2
+
+    // to URI and URL
+
+    property("toUri ends with the path's name") = 1 == 2
+
+    property("toUrl ends with the path's name") = 1 == 2
+
+    //jfile
+
+    //normalize
+
+    property("Normalized path does not contain a .. or a .") = 1 == 2
+
+    property("Normalized path is no longer than the original") = 1 == 2
+
+    property("Normalization is impossible between relative and absolute paths") = 1 == 2
+
+    // isAbsolute
+
+    property("First element is root iff isAbsolute") = 1 == 2
+
+    //toAbsolute
+
+    property("toAbsolute is at least as long as original path") = 1 == 2
+
+    property("toAbsolute makes a path isAbsolute") = 1 == 2
+
+    // endsWith, both string and path
+
+    property("") = 1 == 2
+
+    // startsWith, both string and path
+
+    property("All absolute paths start with root") = 1 == 2
+
+    //
+
+    property("") = 1 == 2
+
+
+  */
 
 }

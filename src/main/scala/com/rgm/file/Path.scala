@@ -83,8 +83,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   }
 
   // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
-  def segments: Seq[Path] = path.split("/").map(_.concat("/")).map(Path(_))
-
+  def segments: Seq[Path] =
+    if (this.equals(Path("/")))
+      List("/")
+    else if (equals(Path("")))
+      List()
+    else
+      path.split("/").map(_.concat("/")).map(Path(_))
 
   // just like segments
   def segmentIterator: Iterator[Path] =  segments.iterator
@@ -100,7 +105,10 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //   Path("..").parent == Path("../..")
   //   Path("/").parent == Path("/")
   // is this sensible, or does it present serious problems? it would certainly be convenient.
+<<<<<<< HEAD
 
+=======
+>>>>>>> 255d739b236e84845daa7c8af1d0c33875fbba5d
   // this breaks on ".." vs "../.." and "." and becomes inconsistent...
 
   def parent: Option[Path] = if (jpath.getParent == null) Option(null) else Option(Path(jpath.getParent))
@@ -153,7 +161,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // this is so that `path1 / path2` behaves exactly like `Path(path1.path + "/" + path2.path)`
   def resolve(other: Path): Path =
   {
-    if(other.isAbsolute)
+    if (other.isAbsolute && equals(Path("")))
+      other.relativeTo(other.root.get)
+    else if(other.isAbsolute)
       Path(path + "/" + other.relativeTo(other.root.get))
     else
       Path(jpath.resolve(other.jpath))
