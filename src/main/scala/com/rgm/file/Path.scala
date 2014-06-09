@@ -299,13 +299,14 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       false
   }
 
-  //copyTo(source, target) /*BROKEN*/
+  //copyTo(source, target)
   def copyTo(target: Path) : Path = Files.copy(jpath, target.jpath)
 
-  //moveFile /*BROKEN*/
+
+  //moveFile
   def moveFile(target: Path) : Unit = Files.move(jpath, target.jpath)
 
-  //moveDirectory  /*BROKEN*/
+  //moveDirectory
   def moveDirectory(target: Path) : Unit =
   {
     if(exists && isDirectory)
@@ -316,11 +317,15 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
           //@throws(classOf[IOException])
           override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult =
           {
-            Files.createDirectories(target.jpath)
+            Files.createDirectories(target.resolve(jpath.relativize(dir)).jpath)
             FileVisitResult.CONTINUE
           }
 
-          override def visitFile(file: JPath,attrs: BasicFileAttributes ) : FileVisitResult = {Files.copy(file, target.jpath); FileVisitResult.CONTINUE}
+          override def visitFile(file: JPath,attrs: BasicFileAttributes) : FileVisitResult =
+          {
+            Files.copy(file, target.resolve(jpath.relativize(file)).jpath)
+            FileVisitResult.CONTINUE
+          }
         })
     }
   }
