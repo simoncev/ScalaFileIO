@@ -1,10 +1,13 @@
 package com.rgm.file
 
-import java.io.{File => JFile}
+import java.io.{File => JFile, IOException}
 import java.net.{URI, URL}
-import java.nio.file.{Path => JPath, Paths, Files, LinkOption}
+import java.nio.file.{Path => JPath, _}
 import scala.language.implicitConversions
 import scala.collection.JavaConverters._
+import java.nio.file.attribute._
+
+
 
 object Path {
   def apply(jpath: JPath): Path = new Path(jpath)
@@ -20,6 +23,19 @@ object Path {
   implicit def fromString(path: String): Path = apply(path)
 
   implicit def toFinder(path: Path): PathFinder = ???
+
+  /**
+   * Enumeration of the Access modes possible for accessing files
+   */
+  /* CHECK ACCESS METHOD USES THIS, HOW? I DON'T KNOW YET :(*/
+
+  /*object AccessModes {
+    sealed trait AccessMode
+    case object Execute extends AccessMode
+    case object Read extends AccessMode
+    case object Write extends AccessMode
+    def values:Set[AccessMode] = Set(Execute, Read, Write)
+  }*/
 }
 
 final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
@@ -45,7 +61,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def path: String = toString
 
-  def name: String = toString
+  def name: String = simpleName + extension
 
   //last most segment without extension
   def simpleName: String = if(segments.last.toString.count(_ == '.') == 1 ) segments.last.toString.split('.')(0) else ""
@@ -89,7 +105,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //   Path("..").parent == Path("../..")
   //   Path("/").parent == Path("/")
   // is this sensible, or does it present serious problems? it would certainly be convenient.
-  // this breaks on ".." vs "../.." and ".", and becomes inconsistent...
+  // this breaks on ".." vs "../.." and "." and becomes inconsistent...
 
   def parent: Option[Path] = if (jpath.getParent == null) Option(null) else Option(Path(jpath.getParent))
 
@@ -167,7 +183,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       jpath.resolveSibling(sibl.path)
   }
 
-    def sibling(other: String): Path = sibling(Path(other))
+  def sibling(other: String): Path = sibling(Path(other))
 
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -200,4 +216,112 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   // etc.
 
+  //createTempFile
+  def createTempFile(prefix: String, suffix: String /*deleteOnExit: Boolean NOT SURE IF NEEDED*/) : Path = Files.createTempFile(jpath,prefix, suffix)
+
+
+  //createTempDir
+  def createTempDir(prefix: String /*FILE ATTRIBUTES???*/ ) : Path = Files.createTempDirectory(jpath, prefix)
+
+
+  //checkAccess -> canWrite, canRead, canExecute
+  /* TOO MANY ERRORS WILL FIX LATER*/
+  def checkAccess(modes: AccessMode*): Boolean = {
+    modes.toString forall {
+      case 'x'  => jfile.canExecute()
+      case 'r'     => jfile.canRead()
+      case 'w'    => jfile.canWrite()
+    }
+  }
+
+  def access_=(accessModes:Iterable[AccessMode]) = {
+    //if (nonExistent) fail("Path %s does not exist".format(path))
+    jfile.setReadable(accessModes exists {_=='r'})
+    jfile.setWritable(accessModes exists {_=='w'})
+    jfile.setExecutable(accessModes exists {_=='x'})
+  }
+  //lastModified
+  def lastModified : FileTime = Files.getLastModifiedTime(jpath)
+
+  //access_
+  def access_(perms: Set[PosixFilePermission]) : Path = Files.setPosixFilePermissions(jpath, perms.asJava)
+
+  //createFile
+  def createFile : Path = Files.createFile(jpath)
+
+  //createDirectory
+  def createDirectory : Path = Files.createDirectory(jpath)
+
+  //deleteIfExists
+  def deleteIfExists : Boolean = Files.deleteIfExists(jpath)
+
+  //delete
+  def delete : Unit = Files.delete(jpath)
+
+  //deleteRecursively
+  def deleteRecursively : Boolean =
+  {
+    //first check if it's a dir or file
+    if(exists && isDirectory)
+    {
+      Files.walkFileTree(jpath,
+        new SimpleFileVisitor[JPath]
+        {
+          //@throws(classOf[IOException])
+          override def postVisitDirectory(dir: JPath, e: IOException) : FileVisitResult =
+          {
+            if(e == None)
+            {
+              throw e
+            }
+            else
+            {
+              Files.delete(dir)
+              FileVisitResult.CONTINUE
+            }
+          }
+
+          override def visitFile(file: JPath,attrs: BasicFileAttributes ) : FileVisitResult = {Files.delete(file);FileVisitResult.CONTINUE }
+        }
+      )
+      true
+    }
+    else if(exists)
+    {
+      try {
+        delete
+        true
+      } catch {
+        case e: IOException => false
+      }
+    }
+    else
+      false
+  }
+
+  //copyTo(source, target) /*BROKEN*/
+  def copyTo(target: Path) : Path = Files.copy(jpath, target.jpath)
+
+  //moveFile /*BROKEN*/
+  def moveFile(target: Path) : Unit = Files.move(jpath, target.jpath)
+
+  //moveDirectory  /*BROKEN*/
+  def moveDirectory(target: Path) : Unit =
+  {
+    if(exists && isDirectory)
+    {
+      Files.walkFileTree(jpath,
+        new SimpleFileVisitor[JPath]
+        {
+          //@throws(classOf[IOException])
+          override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult =
+          {
+            Files.createDirectories(target.jpath)
+            FileVisitResult.CONTINUE
+          }
+
+          override def visitFile(file: JPath,attrs: BasicFileAttributes ) : FileVisitResult = {Files.copy(file, target.jpath); FileVisitResult.CONTINUE}
+        })
+    }
+  }
 }
