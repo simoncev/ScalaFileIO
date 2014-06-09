@@ -105,10 +105,6 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //   Path("..").parent == Path("../..")
   //   Path("/").parent == Path("/")
   // is this sensible, or does it present serious problems? it would certainly be convenient.
-<<<<<<< HEAD
-
-=======
->>>>>>> 255d739b236e84845daa7c8af1d0c33875fbba5d
   // this breaks on ".." vs "../.." and "." and becomes inconsistent...
 
   def parent: Option[Path] = if (jpath.getParent == null) Option(null) else Option(Path(jpath.getParent))
