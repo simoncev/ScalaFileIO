@@ -100,25 +100,10 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //   Path("..").parent == Path("../..")
   //   Path("/").parent == Path("/")
   // is this sensible, or does it present serious problems? it would certainly be convenient.
-  <<<<<<< HEAD
-  def parent: Option[Path] = Option(Path(jpath).resolve("..").normalize)
-  /*{
-    if(path.equals(""))
-      Option(Path(".."))
-    else if(path.equalsIgnoreCase("/"))
-      Option(Path("/"))
-    else if (segmentIterator.forall(k => k.toString.equals("..")))
-      Option(Path(segments.mkString("/").concat("/..")))
-    else if ((path.count(_ == '/') == 0 || path.count(_ == '/') == 1) && segmentCount == 1)
-      Option(Path("."))
-    else
-      Option(jpath.normalize.getParent).map(Path(_))
-  }*/
-  =======
+
   // this breaks on ".." vs "../.." and "." and becomes inconsistent...
 
   def parent: Option[Path] = if (jpath.getParent == null) Option(null) else Option(Path(jpath.getParent))
-  >>>>>>> 655994bde07f2bde81d89bd05f9e5b949dcdb742
 
   def subpath(begin: Int, end: Int): Path = Path(jpath.subpath(begin, end))
 
@@ -308,13 +293,14 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       false
   }
 
-  //copyTo(source, target) /*BROKEN*/
+  //copyTo(source, target)
   def copyTo(target: Path) : Path = Files.copy(jpath, target.jpath)
 
-  //moveFile /*BROKEN*/
+
+  //moveFile
   def moveFile(target: Path) : Unit = Files.move(jpath, target.jpath)
 
-  //moveDirectory  /*BROKEN*/
+  //moveDirectory
   def moveDirectory(target: Path) : Unit =
   {
     if(exists && isDirectory)
@@ -325,11 +311,15 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
           //@throws(classOf[IOException])
           override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult =
           {
-            Files.createDirectories(target.jpath)
+            Files.createDirectories(target.resolve(jpath.relativize(dir)).jpath)
             FileVisitResult.CONTINUE
           }
 
-          override def visitFile(file: JPath,attrs: BasicFileAttributes ) : FileVisitResult = {Files.copy(file, target.jpath); FileVisitResult.CONTINUE}
+          override def visitFile(file: JPath,attrs: BasicFileAttributes) : FileVisitResult =
+          {
+            Files.copy(file, target.resolve(jpath.relativize(file)).jpath)
+            FileVisitResult.CONTINUE
+          }
         })
     }
   }
