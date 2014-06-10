@@ -184,15 +184,26 @@ object SyntaxSpec extends Properties("Path")
 
 }
 
-class FileIOSpec extends FlatSpec {
-
-  behavior of "A Stack"
-
-  def fixture =
+trait FileSetupTeardown extends BeforeAndAfterAll { this: Suite =>
+  val fixture =
     new {
       val myStack = new Stack[Int]
       val myEmptyStack = new Stack[String]
+      println("Starting...")
+    }
+
+  override def afterAll = {
+    try super.afterAll
+    finally {
+      println("We did it! WOOOOOOOOHOOOOOOOO")
+    }
   }
+}
+
+class FileIOSpec extends FlatSpec with FileSetupTeardown {
+
+  behavior of "A Stack"
+
 
   it should "pop values in last-in-first-out order" in {
     val stack = fixture.myStack
@@ -207,6 +218,10 @@ class FileIOSpec extends FlatSpec {
     intercept[NoSuchElementException] {
       emptyStack.pop()
     }
+  }
+
+  override def afterAll = {
+
   }
 }
 
