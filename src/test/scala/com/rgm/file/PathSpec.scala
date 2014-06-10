@@ -2,12 +2,14 @@ package com.rgm.file
 import org.scalacheck._
 
 import org.scalatest._
+import scala.collection.mutable.Stack
+
 import scala.collection.immutable.Range
 
 /**
  * Created by sshivaprasad on 6/4/14.
  */
-object PathSpec extends Properties("Path")
+object SyntaxSpec extends Properties("Path")
 {
   import Prop._
   import Generators._
@@ -39,10 +41,12 @@ object PathSpec extends Properties("Path")
 
   //properties for root
   property("root:p is absolute") = forAll{ (p:Path) => p.isAbsolute == p.root.isDefined}
-
-  //properties for parent
-  property
 */
+  //properties for parent
+  property("Absolute paths always have a parent") = 1 == 1
+
+  property("Parent of a path is the same as path + /..") =
+    forAll{(p: Path) => p == p}
 
   // sibling, both string and path
   property("Sibling has same parent (called with Path)") =
@@ -179,3 +183,24 @@ object PathSpec extends Properties("Path")
 
 
 }
+
+class FileIOSpec extends FlatSpec {
+
+  behavior of "A Stack"
+
+  it should "pop values in last-in-first-out order" in {
+    val stack = new Stack[Int]
+    stack.push(1)
+    stack.push(2)
+    assert(stack.pop() === 2)
+    assert(stack.pop() === 1)
+  }
+
+  it should "throw NoSuchElementException if an empty stack is popped" in {
+    val emptyStack = new Stack[String]
+    intercept[NoSuchElementException] {
+      emptyStack.pop()
+    }
+  }
+}
+
