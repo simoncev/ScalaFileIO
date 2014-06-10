@@ -195,7 +195,7 @@ trait FileSetupTeardown extends BeforeAndAfterAll { this: Suite =>
   override def afterAll = {
     try super.afterAll
     finally {
-      println("We did it! WOOOOOOOOHOOOOOOOO")
+      //do teardown
     }
   }
 }
@@ -220,8 +220,5 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     }
   }
 
-  override def afterAll = {
-
-  }
 }
 
