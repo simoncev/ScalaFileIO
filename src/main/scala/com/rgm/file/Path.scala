@@ -133,13 +133,14 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def jfile: JFile = jpath.toFile
 
   // should behave like JPath.relativize (the scalax implementation is backwards and broken)
+  // throws an error if you relativize relative and absolute paths
   def relativize(other: Path): Path = jpath.relativize(other.jpath)
 
-  def relativize(other: String): Path = jpath.relativize(fileSystem.path(other))
+  def relativize(other: String): Path = jpath.relativize(fileSystem.path(other).jpath)
 
   def relativeTo(base: Path): Path = base.relativize(this)
 
-  def relativeTo(base: String): Path = jpath.relativize(fileSystem.path(base))
+  def relativeTo(base: String): Path = fileSystem.path(base).relativize(this)
 
   // should behave like JPath.resolve except when `other` is an absolute path, in which case in should behave as if
   // `other` were actually a relative path (i.e. `other.relativeTo(other.root.get)`)

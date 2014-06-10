@@ -21,18 +21,18 @@ object Generators {
                                                (5, genCurrentDirString),
                                                (85, genLegalCharsString))
 
-  val genPathStringLists: Gen[List[String]] = Gen.listOf(genLegalString)
+  val genPathStringList: Gen[List[String]] = Gen.listOf(genLegalString)
 
-  val genRelativePathStrings: Gen[String] = genPathStringLists.map(str => str.mkString("/"))
+  val genRelativePathString: Gen[String] = genPathStringList.map(str => str.mkString("/")).filter(str => !str.startsWith("/"))
 
-  val genAbsolutePathStrings: Gen[String] = genRelativePathStrings.map(str => "/".concat(str.mkString("/")))
+  val genAbsolutePathString: Gen[String] = genRelativePathString.map(str => "/".concat(str.mkString("/")))
 
-  val genPathStrings: Gen[String] = frequency((50, genRelativePathStrings),
-                                              (50, genAbsolutePathStrings))
+  val genPathStrings: Gen[String] = frequency((50, genRelativePathString),
+                                              (50, genAbsolutePathString))
 
-  val genRelativePath: Gen[Path] = genRelativePathStrings.map(str => Path(str))
+  val genRelativePath: Gen[Path] = genRelativePathString.map(str => Path(str))
 
-  val genAbsolutePath: Gen[Path] = genAbsolutePathStrings.map(str => Path("/".concat(str)))
+  val genAbsolutePath: Gen[Path] = genAbsolutePathString.map(str => Path("/".concat(str)))
 
   val genPath: Gen[Path] = frequency((50, genRelativePath),
                                      (50, genAbsolutePath))
