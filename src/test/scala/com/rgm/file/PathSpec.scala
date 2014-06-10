@@ -223,11 +223,7 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
     (dirs,fls)
   }
 
-  /*override def afterEach = {
-    try super.afterEach
-    finally {
-    }
-  }*/
+
 
   override def beforeEach = {
     try super.beforeEach
@@ -307,6 +303,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
       assert(tmp.exists && tmp.isDirectory)
     }
   }
+
 
   //deleteRecursively test
   it should "recursively delete the 'src' directory where the file tree is constructed" in {
@@ -417,5 +414,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     p.setFilePerm(s)
     assert(p.checkAccess())
   }
+
 }
 
