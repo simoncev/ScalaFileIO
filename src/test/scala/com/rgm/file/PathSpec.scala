@@ -188,8 +188,14 @@ class FileIOSpec extends FlatSpec {
 
   behavior of "A Stack"
 
+  def fixture =
+    new {
+      val myStack = new Stack[Int]
+      val myEmptyStack = new Stack[String]
+  }
+
   it should "pop values in last-in-first-out order" in {
-    val stack = new Stack[Int]
+    val stack = fixture.myStack
     stack.push(1)
     stack.push(2)
     assert(stack.pop() === 2)
@@ -197,7 +203,7 @@ class FileIOSpec extends FlatSpec {
   }
 
   it should "throw NoSuchElementException if an empty stack is popped" in {
-    val emptyStack = new Stack[String]
+    val emptyStack = fixture.myEmptyStack
     intercept[NoSuchElementException] {
       emptyStack.pop()
     }
