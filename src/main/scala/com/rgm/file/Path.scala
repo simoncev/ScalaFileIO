@@ -24,18 +24,7 @@ object Path {
 
   implicit def toFinder(path: Path): PathFinder = ???
 
-  /**
-   * Enumeration of the Access modes possible for accessing files
-   */
-  /* CHECK ACCESS METHOD USES THIS, HOW? I DON'T KNOW YET :(*/
 
-  /*object AccessModes {
-    sealed trait AccessMode
-    case object Execute extends AccessMode
-    case object Read extends AccessMode
-    case object Write extends AccessMode
-    def values:Set[AccessMode] = Set(Execute, Read, Write)
-  }*/
 }
 
 final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
@@ -198,21 +187,21 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def isSame(other: Path): Boolean = normalize == other.normalize
 
-  def size: Option[Long] = Option(Files.size(jpath.toAbsolutePath))
+  def size: Option[Long] = Option(Files.size(jpath))
 
-  def isDirectory: Boolean = Files.isDirectory(jpath.toAbsolutePath)
+  def isDirectory: Boolean = Files.isDirectory(jpath)
 
-  def isFile: Boolean = Files.isRegularFile(jpath.toAbsolutePath) // == isRegularFile
+  def isFile: Boolean = Files.isRegularFile(jpath) // == isRegularFile
 
-  def isSymLink: Boolean = Files.isSymbolicLink(jpath.toAbsolutePath)
+  def isSymLink: Boolean = Files.isSymbolicLink(jpath)
 
-  def isHidden: Boolean = Files.isHidden(jpath.toAbsolutePath)
+  def isHidden: Boolean = Files.isHidden(jpath)
 
-  def isReadable: Boolean = Files.isReadable(jpath.toAbsolutePath)
+  def isReadable: Boolean = Files.isReadable(jpath)
 
-  def isWritable: Boolean = Files.isWritable(jpath.toAbsolutePath)
+  def isWritable: Boolean = Files.isWritable(jpath)
 
-  def isExecutable: Boolean = Files.isExecutable(jpath.toAbsolutePath)
+  def isExecutable: Boolean = Files.isExecutable(jpath)
 
   // etc.
 
@@ -229,8 +218,8 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def checkAccess(modes: AccessMode*): Boolean = {
     modes.toString forall {
       case 'x'  => jfile.canExecute()
-      case 'r'     => jfile.canRead()
-      case 'w'    => jfile.canWrite()
+      case 'r'  => jfile.canRead()
+      case 'w'  => jfile.canWrite()
     }
   }
 
