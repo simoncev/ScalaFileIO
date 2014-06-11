@@ -32,15 +32,15 @@ object SyntaxSpec extends Properties("Path")
   //properties for withExtension function
   property("withExtension is simple name plus the extension") = forAll{ (p:Path, s:String) => p.withExtension(Option(s)) == p.simpleName.toString.concat(s) }
 
-  //properties for segments function
-  property("segments size check") = forAll{ (p: Path) => p.segments.size <= p.path.count(_ == '/') + 1 }
-
-  //properties for segments iterable
-  property("segments each item returned by iterator exists in name") = forAll{ (p: Path) => p.segmentIterator.forall(k => p.name.contains(k.toString))}
-  property("segments each item returned by iterator's size is less than name") = forAll{ (p: Path) => p.segmentIterator.forall(k => p.name.size >= k.toString.size)}
-
-  //properties for segment size
-  property("segmentsCount check") = forAll{ (p: Path) => p.segmentCount == p.segments.size }
+//  //properties for segments function
+//  property("segments size check") = forAll{ (p: Path) => p.segments.size <= p.path.count(_ == '/') + 1 }
+//
+//  //properties for segments iterable
+//  property("segments each item returned by iterator exists in name") = forAll{ (p: Path) => p.segmentIterator.forall(k => p.name.contains(k.toString))}
+//  property("segments each item returned by iterator's size is less than name") = forAll{ (p: Path) => p.segmentIterator.forall(k => p.name.size >= k.toString.size)}
+//
+//  //properties for segment size
+//  property("segmentsCount check") = forAll{ (p: Path) => p.segmentCount == p.segments.size }
 
   //properties for root
   property("root:p is absolute") = forAll{ (p:Path) => p.isAbsolute == p.root.isDefined}
