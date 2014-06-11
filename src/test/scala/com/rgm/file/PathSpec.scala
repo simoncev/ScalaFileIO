@@ -3,6 +3,7 @@ import org.scalacheck._
 
 import org.scalatest._
 import scala.collection.mutable.Stack
+import scala.language.reflectiveCalls
 
 import scala.collection.immutable.Range
 
@@ -16,37 +17,43 @@ object SyntaxSpec extends Properties("Path")
 
 
   //properties for path function
-  property("path") = forAll{ (p: Path) =>  p.path == p.jpath.toString}
-/*
+  property("path agrees with jpath") =
+    forAll{ (p: Path) =>  p.path == p.jpath.toString}
+
   //properties for simpleName function
-  property("simpleName") = forAll{ (p: Path) => p.simpleName == p.path.replaceAll("""\.(.*)""", "")}
-  property("simpleName size check") = forAll{ (p: Path) => p.simpleName.size <= p.path.size}
+//  property("simpleName") = forAll{ (p: Path) => p.simpleName == p.path.replaceAll("""\.(.*)""", "")}
+//  property("simpleName size check") = forAll{ (p: Path) => p.simpleName.size <= p.path.size}
 
   //properties for extension function
-  property("extension") = forAll{ (p:Path) => p.extension.toString.matches("""\.(.*)""") }
-  property("extension size check") = forAll{ (p: Path) => p.extension.get.toString.size < p.name.size}
+  property("extension size check") = forAll{ (p: Path) => if (p.extension == None) true else p.extension.get.toString.size < p.name.size}
+  property("extension ") = 1 == 1
 
   //properties for withExtension function
-  property("withExtension") = forAll{ (p:Path, s:String) => p.withExtension(Option(s)) == p.simpleName.toString.concat(s) }
+  property("withExtension is simple name plus the extension") = forAll{ (p:Path, s:String) => p.withExtension(Option(s)) == p.simpleName.toString.concat(s) }
 
   //properties for segments function
-  property("segments size check") = forAll{ (p: Path) => p.segments.size == p.name.count(_ == '/') + 1 }
+  property("segments size check") = forAll{ (p: Path) => p.segments.size <= p.path.count(_ == '/') + 1 }
 
   //properties for segments iterable
-  property("segments each iterable exists in name") = forAll{ (p: Path) => p.segmentIterator.forall(k => p.name.contains(k.toString))}
-  property("segments each iterable size less than name") = forAll{ (p: Path) => p.segmentIterator.forall(k => p.name.size > k.toString.size)}
+  property("segments each item returned by iterator exists in name") = forAll{ (p: Path) => p.segmentIterator.forall(k => p.name.contains(k.toString))}
+  property("segments each item returned by iterator's size is less than name") = forAll{ (p: Path) => p.segmentIterator.forall(k => p.name.size >= k.toString.size)}
 
   //properties for segment size
   property("segmentsCount check") = forAll{ (p: Path) => p.segmentCount == p.segments.size }
 
   //properties for root
   property("root:p is absolute") = forAll{ (p:Path) => p.isAbsolute == p.root.isDefined}
-*/
-  //properties for parent
-  property("Absolute paths always have a parent") = 1 == 1
 
-  property("Parent of a path is the same as path + /..") =
-    forAll{(p: Path) => p == p}
+  //properties for parent
+  property("Parent of a normalized path is the same as path + /..") =
+    forAll{(p: Path) =>
+      if (p.normalize.parent != None || p.normalize.segments.last == Path(".."))
+        p.normalize.parent.get == p.normalize.resolve("..").normalize
+      else
+        true}
+
+  property("Parent is prefix of its path") =
+    forAll{(p: Path) => if (p.parent != None) p.startsWith(p.parent.get) else true}
 
   // sibling, both string and path
   property("Sibling has same parent (called with Path)") =

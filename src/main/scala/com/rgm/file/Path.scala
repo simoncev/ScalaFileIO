@@ -53,13 +53,23 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def name: String = simpleName + extension
 
   //last most segment without extension
-  def simpleName: String = if(segments.last.toString.count(_ == '.') == 1 ) segments.last.toString.split('.')(0) else ""
+  def simpleName: String =
+    if(segments.isEmpty)
+      ""
+    else if(segments.last.toString.count(_ == '.') >= 1 )
+      segments.last.path.substring(segments.last.path.lastIndexOf('.'), segments.last.path.length)
+    else
+      segments.last.path
 
 
-  def extension: Option[String] = name.lastIndexWhere (_ == '.') match {
-    case idx if idx != -1 => Some(name.drop(idx))
-    case _ => None
-  }
+  def extension: Option[String] =
+    if(segments.isEmpty)
+      None
+    else if( segments.last.name.tail.count(_ == '.') >= 1 )
+      Some(segments.last.name.split('.').last)
+    else
+      None
+
 
   def withExtension(extension: Option[String]): Path =
   {
