@@ -51,35 +51,36 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def path: String = toString
 
-  def name: String = simpleName + extension
+  def name: String = if (segments.isEmpty) path else segments.last.path
 
   //last most segment without extension
   def simpleName: String =
-    if(segments.isEmpty)
-      ""
-    else if(segments.last.toString.count(_ == '.') >= 1 )
-      segments.last.path.substring(segments.last.path.lastIndexOf('.'), segments.last.path.length)
-    else
-      segments.last.path
+    if(extension == None)
+      name
+    else {
+      val idx = name.lastIndexWhere(_ == '.')
+      name.dropRight(name.size - idx)
+    }
+
 
 
   def extension: Option[String] =
-    if(segments.isEmpty)
+    if(segments.isEmpty || name == "..")
       None
-    else if( segments.last.name.tail.count(_ == '.') >= 1 )
-      Some(segments.last.name.split('.').last)
+    else if( name.tail.count(_ == '.') >= 1 ) {
+      val idx = name.lastIndexWhere(_ == '.')
+      Some(name.drop(idx + 1))
+    }
     else
       None
 
 
   def withExtension(extension: Option[String]): Path =
   {
-    if(extension.isEmpty)
-      path
-    else if(segments.last.toString.charAt(0).equals('.'))
-      segments.init.mkString("/").concat("/").concat(segments.last.toString.concat(extension.get.toString))
+    if(extension.isEmpty || segments.isEmpty || path == "/")
+      this  //create a . file for extension  ""? what about Path("/")?
     else
-      segments.init.mkString("/").concat("/").concat(segments.last.toString.split('.').init.mkString(".").concat(extension.get.toString))
+      Path(segments.init.mkString("/") +"/" + simpleName + "." + extension.get)
   }
 
   // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
