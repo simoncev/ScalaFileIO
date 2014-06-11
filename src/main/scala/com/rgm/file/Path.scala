@@ -3,6 +3,7 @@ package com.rgm.file
 import java.io.{File => JFile, IOException}
 import java.net.{URI, URL}
 import java.nio.file.{Path => JPath, _}
+import java.nio.file.AccessMode._
 import scala.language.implicitConversions
 import scala.collection.JavaConverters._
 import java.nio.file.attribute._
@@ -227,24 +228,23 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //checkAccess -> canWrite, canRead, canExecute
   /* TOO MANY ERRORS WILL FIX LATER*/
   def checkAccess(modes: AccessMode*): Boolean = {
-    modes.toString forall {
-      case 'x'  => jfile.canExecute()
-      case 'r'  => jfile.canRead()
-      case 'w'  => jfile.canWrite()
+    modes forall {
+      case EXECUTE  => jfile.canExecute()
+      case READ  => jfile.canRead()
+      case WRITE  => jfile.canWrite()
     }
   }
 
-  def access_=(accessModes:Iterable[AccessMode]) = {
-    //if (nonExistent) fail("Path %s does not exist".format(path))
-    jfile.setReadable(accessModes exists {_=='r'})
-    jfile.setWritable(accessModes exists {_=='w'})
-    jfile.setExecutable(accessModes exists {_=='x'})
+  def setAccess(accessModes:Iterable[AccessMode]) = {
+    jfile.setReadable(accessModes exists {_==READ})
+    jfile.setWritable(accessModes exists {_==WRITE})
+    jfile.setExecutable(accessModes exists {_==EXECUTE})
   }
   //lastModified
   def lastModified : FileTime = Files.getLastModifiedTime(jpath)
 
-  //access_
-  def access_(perms: Set[PosixFilePermission]) : Path = Files.setPosixFilePermissions(jpath, perms.asJava)
+  //sets POSIX file permissions
+  def setFilePerm(perms: Set[PosixFilePermission]) : Path = Files.setPosixFilePermissions(jpath, perms.asJava)
 
   //createFile
   def createFile : Path = Files.createFile(jpath)
