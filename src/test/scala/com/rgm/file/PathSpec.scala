@@ -185,7 +185,7 @@ object SyntaxSpec extends Properties("Path")
 
 }
 
-trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
+trait FileSetupTeardown extends BeforeAndAfterEach with BeforeAndAfterAll{ this: Suite =>
   var dat =
     new {
       var (src, target, dirs, fils) = setup
@@ -193,8 +193,10 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
 
   def setup : (String, String, ListBuffer[JPath], ListBuffer[JPath]) =
   {
-    val src = "/Users/sshivaprasad/Documents/TEST/src/"
-    val target = "/Users/sshivaprasad/Documents/TEST/target/"
+
+    val home = System.getProperty("user.home")
+    val src = home + "/source/"
+    val target =  home + "/target/"
     val p = new Path(FileSystems.getDefault.getPath(src))
     val q = new Path(FileSystems.getDefault.getPath(target))
     if(p.exists)
@@ -224,7 +226,15 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
   }
 
 
-
+  override def afterAll = {
+    try super.afterAll
+    finally{
+      val p = new Path(FileSystems.getDefault.getPath(dat.src))
+      val q = new Path(FileSystems.getDefault.getPath(dat.target))
+      p.deleteRecursively
+      q.deleteRecursively
+    }
+  }
   override def beforeEach = {
     try super.beforeEach
     finally{
