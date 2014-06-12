@@ -9,6 +9,7 @@ import scala.collection.mutable._
 
 import scala.util._
 import scala.language.reflectiveCalls
+import scala.language.postfixOps
 
 
 /**
@@ -502,14 +503,14 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 //    assert(p.checkAccess())
 //  }
 
-  it should "19. correct the case of paths with toRealPath" in {
-    for(i <- dat.fils.toList) {
-      val equivalentPath = Path(Path(i).path.toUpperCase)
-      if(!(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i)))
-        dat.flag = false
-      assert(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i))
-    }
-  }
+//  it should "19. correct the case of paths with toRealPath" in {
+//    for(i <- dat.fils.toList) {
+//      val equivalentPath = Path(Path(i).path.toUpperCase)
+//      if(!(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i)))
+//        dat.flag = false
+//      assert(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i))
+//    }
+//  }
 
   it should "20. not resolve symbolic links in toRealPath iff NOFOLLOW_LINKS option is used " in {
     val p = Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
@@ -521,7 +522,8 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     val shouldSucceed = Try(pChild.toRealPath())
     if(!(shouldFail.get.toString == pChild.path && shouldSucceed.get.toString != qChild.path))
       dat.flag = false
-    assert(shouldFail.get.toString == pChild.path && shouldSucceed.get.toString != qChild.path)
+    assert(shouldFail.get.toString == pChild.path)
+    assert(shouldSucceed.get.toString == qChild.toRealPath().toString)
   }
 
 
