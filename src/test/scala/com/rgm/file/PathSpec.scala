@@ -6,6 +6,7 @@ import org.scalatest._
 import java.nio.file.{Path => JPath, _}
 import scala.collection.mutable._
 import scala.util._
+import scala.language.reflectiveCalls
 
 
 /**
@@ -286,21 +287,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   behavior of "File System"
 
-  it should "correct the case of paths with toRealPath" in {
-    for(i <- dat.fils.toList) {
-      val equivalentPath = Path(Path(i).path.toUpperCase)// + "/./thisShouldNotBeInThePath/..")
-      assert(equivalentPath.toRealPath() == Path(i))
-    }
-  }
-
-  it should "not resolve symbolic links when NOFOLLOW_LINKS option is used in toRealPath" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
-    val q = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
-    Files.createSymbolicLink(p.jpath, q.jpath)
-    val error = Try(p.toRealPath(LinkOption.NOFOLLOW_LINKS))
-    assert(!error.isFailure)
-  }
-
   //copyTo test
   it should "1. copy file to target location correctly" in {
     //val fils = main.fils
@@ -409,14 +395,13 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   //deleteIfExists test
   it should "8. delete a file if it exists else fail" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
-    //val q = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test2", ".tmp")
-    p.deleteIfExists
-    /*if(!(!p.deleteIfExists && q.deleteIfExists)) {
-      dat.flag = false
-      println("GAMETIME")
-    }
-    assert(!p.deleteIfExists && q.deleteIfExists)*/
-
+    val q = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test2", ".tmp")
+    p.delete
+//    if(!(!p.exists && q.nonExistent))
+//      dat.flag = false
+//
+//    assert(!p.deleteIfExists && q.deleteIfExists)
+//
     if(!p.nonExistent)
       dat.flag = false
     assert(p.nonExistent)
@@ -498,8 +483,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //access sets access modes for the given path
   it should "18. set the correct access modes" in {
-    //if(!dat.flag)
-    //  assert(false)
     val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
     val l = List(AccessMode.EXECUTE)
     p.setAccess(l)
@@ -516,20 +499,26 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 //    assert(p.checkAccess())
 //  }
 
+  it should "19. correct the case of paths with toRealPath" in {
+    for(i <- dat.fils.toList) {
+      val equivalentPath = Path(Path(i).path.toUpperCase)
+      if(!(equivalentPath.toRealPath() != Path(i)))
+        dat.flag = false
+      assert(equivalentPath.toRealPath() != Path(i))
+    }
+  }
+
   it should "20. not resolve symbolic links in toRealPath iff NOFOLLOW_LINKS option is used " in {
     val p = Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
     val q = Path(FileSystems.getDefault.getPath(dat.target + "testDir/")).createDirectory
     Files.createSymbolicLink(p.jpath, q.jpath)
     val pChild = p.resolve("targetFile")
-    //println("p child = " + pChild)
     val qChild = q.resolve("targetFile").createFile
     val shouldFail = Try(pChild.toRealPath(LinkOption.NOFOLLOW_LINKS))
     val shouldSucceed = Try(pChild.toRealPath())
-    println(shouldSucceed.get)
-    if(!(shouldFail.isFailure && shouldSucceed.isSuccess))
+    if(!(shouldFail.get.toString == pChild.path && shouldSucceed.get.toString != qChild.path))
       dat.flag = false
-    assert(shouldFail == pChild && shouldSucceed == qChild)
-
+    assert(shouldFail.get.toString == pChild.path && shouldSucceed.get.toString != qChild.path)
   }
 
 }
