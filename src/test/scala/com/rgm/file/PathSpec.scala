@@ -4,7 +4,7 @@ import org.scalacheck._
 import org.scalatest._
 import java.nio.file.{Path => JPath, _}
 import scala.collection.mutable._
-import scala.util.Random
+import scala.util._
 import scala.collection.immutable.Range
 
 /**
@@ -189,16 +189,19 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
   var dat =
     new {
       var flag: Boolean = true
-      var (src: String, target: String, dirs: ListBuffer[JPath] , fils: ListBuffer[JPath]) = setup
+      var test_no: Int = 1
+      var (src: String, target: String, dirs: ListBuffer[JPath] , fils: ListBuffer[JPath]) = ("","",new ListBuffer[JPath],new ListBuffer[JPath]) //setup
     }
 
   def setup : (String, String, ListBuffer[JPath], ListBuffer[JPath]) =
   {
 
     val home = System.getProperty("user.home")
-    val src = java.nio.file.Files.createTempDirectory("source").toString + "/"//home + "/source/"
-    println(src)
-    val target =  java.nio.file.Files.createTempDirectory("target").toString + "/"
+    val src = java.nio.file.Files.createTempDirectory("source_" + dat.test_no + "_").toString + "/"
+    val target =  java.nio.file.Files.createTempDirectory("target_" + dat.test_no + "_").toString + "/"
+    if(dat.test_no == 1)
+      println("File trees can be found in: " + src.split("/").init.mkString("/") + "/" + "\nStructure of folder <source/target>_<test number>_ if test fails")
+    dat.test_no += 1
     val p = new Path(FileSystems.getDefault.getPath(src))
     val q = new Path(FileSystems.getDefault.getPath(target))
     if(p.exists)
@@ -207,7 +210,7 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
     if(q.exists)
       q.deleteRecursively
     q.createDirectory
-
+    //println("from setup - " + p.path)
     val (dirs,fils) = createFS(p)
     (src, target, dirs, fils)
   }
@@ -231,12 +234,14 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
   override def afterEach = {
     try super.afterEach
     finally{
-      //if(dat.flag) {
-      val p = new Path(FileSystems.getDefault.getPath(dat.src))
-      val q = new Path(FileSystems.getDefault.getPath(dat.target))
-      p.deleteRecursively
-      q.deleteRecursively
-      //}
+      if(dat.flag) {
+        val p = new Path(FileSystems.getDefault.getPath(dat.src))
+        val q = new Path(FileSystems.getDefault.getPath(dat.target))
+        //println("from after - " + p.path)
+        p.deleteRecursively
+        q.deleteRecursively
+      }
+      else dat.flag = true
     }
   }
   override def beforeEach = {
@@ -259,11 +264,9 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   behavior of "File System"
 
   //copyTo test
-  it should "copy file to target location correctly" in {
+  it should "1. copy file to target location correctly" in {
     //val fils = main.fils
     //val target = main.target
-    if(!dat.flag)
-      assert(false)
     for(i <- dat.fils.toList)
     {
       val tmp = new Path(i)
@@ -278,14 +281,14 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     for(x <- dat.fils.toList)
     {
       val tmp = new Path(FileSystems.getDefault.getPath(dat.target + x.toString.split("/").last))
+      if(!(tmp.exists && tmp.isFile && (tmp.size.get == 0)))
+        dat.flag = false
       assert(tmp.exists && tmp.isFile && (tmp.size.get == 0))
     }
   }
 
   //moveTo test
-  it should "moveFile to target location correctly" in {
-    if(!dat.flag)
-      assert(false)
+  it should "2. moveFile to target location correctly" in {
     for(i <- dat.fils.toList)
     {
       val tmp = new Path(i)
@@ -300,15 +303,15 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     {
       val tmp = new Path(FileSystems.getDefault.getPath(dat.target + x.toString.split("/").last))
       val tmp2 = new Path(x)
+      if(!(tmp.exists && tmp.isFile && tmp2.nonExistent && (tmp.size.get == 0)))
+        dat.flag = false
       assert(tmp.exists && tmp.isFile && tmp2.nonExistent && (tmp.size.get == 0))
     }
 
   }
 
   //moveDirectory test
-  it should "move directory to target location correctly" in {
-    if(!dat.flag)
-      assert(false)
+  it should "3. move directory to target location correctly" in {
     for(i <- dat.dirs.toList)
     {
       val tmp = new Path(i)
@@ -330,9 +333,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
 
   //deleteRecursively test
-  it should "recursively delete the 'src' directory where the file tree is constructed" in {
-    if(!dat.flag)
-      assert(false)
+  it should "4. recursively delete the 'src' directory where the file tree is constructed" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.src))
     p.deleteRecursively
     if(!p.nonExistent)
@@ -341,9 +342,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //createTempFile test
-  it should "create temp file in target and check its existence" in {
-    if(!dat.flag)
-      assert(false)
+  it should "5. create temp file in target and check its existence" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
     if(!p.exists)
       dat.flag = false
@@ -351,7 +350,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //createTempDir test
-  it should "create temp dir in target and check its existence" in {
+  it should "6. create temp dir in target and check its existence" in {
     if(!dat.flag)
       assert(false)
     val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempDir("test")
@@ -361,9 +360,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //delete test
-  it should "create a temp file then delete it and check its existence" in {
-    if(!dat.flag)
-      assert(false)
+  it should "7. create a temp file then delete it and check its existence" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
     p.delete
     if(!p.nonExistent)
@@ -372,11 +369,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //deleteIfExists test
-  it should "delete a file if it exists else fail" in {
-    if(!dat.flag) {
-      assert(false)
-      println("FAILING")
-    }
+  it should "8. delete a file if it exists else fail" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
     //val q = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test2", ".tmp")
     p.deleteIfExists
@@ -392,9 +385,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //createDirectory
-  it should "create a directory and check its existence" in {
-    if(!dat.flag)
-      assert(false)
+  it should "9. create a directory and check its existence" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target + "test")).createDirectory
     if(!p.exists)
       dat.flag = false
@@ -402,9 +393,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //createFile
-  it should "create a file and check its existence" in {
-    if(!dat.flag)
-      assert(false)
+  it should "10. create a file and check its existence" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
     if(!p.exists)
       dat.flag = false
@@ -412,9 +401,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //isSame test
-  it should "check if the file is the same" in {
-    if(!dat.flag)
-      assert(false)
+  it should "11. check if the file is the same" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
     if(!p.isSame(p))
       dat.flag = false
@@ -422,9 +409,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //size test
-  it should "ensure temp file size is 0" in {
-    if(!dat.flag)
-      assert(false)
+  it should "12. ensure temp file size is 0" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
     if(p.size.get != 0)
       dat.flag = false
@@ -432,9 +417,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //isReadable test
-  it should "create a temp file and check if it is readable-> true" in {
-    if(!dat.flag)
-      assert(false)
+  it should "13. create a temp file and check if it is readable-> true" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
     if(!p.isReadable)
       dat.flag = false
@@ -442,7 +425,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //isWritable test
-  it should "create a temp file and check if it is writable-> true" in {
+  it should "14. create a temp file and check if it is writable-> true" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
     if(!p.isWritable)
       dat.flag = false
@@ -450,9 +433,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //isExecutable test
-  it should "create a temp file and check if it is executable-> false" in {
-    if(!dat.flag)
-      assert(false)
+  it should "15. create a temp file and check if it is executable-> false" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
     if(p.isExecutable)
       dat.flag = false
@@ -460,9 +441,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //isSymbolicLink test
-  it should "creates a SymLink using NIO and ensures it is a symbolic link" in {
-    if(!dat.flag)
-      assert(false)
+  it should "16. creates a SymLink using NIO and ensures it is a symbolic link" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
     val q = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
     Files.createSymbolicLink(p.jpath,q.jpath)
@@ -472,9 +451,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //checkAccess test=create tmp file(only read & write access) -> ensure READ/WRITE and no EXECUTE
-  it should "creates a tmp file and checks permissions" in {
-    if(!dat.flag)
-      assert(false)
+  it should "17. creates a tmp file and checks permissions" in {
     val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
     if(!(p.checkAccess(AccessMode.READ) && p.checkAccess(AccessMode.WRITE) && !p.checkAccess(AccessMode.EXECUTE)))
       dat.flag = false
@@ -482,9 +459,9 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //access sets access modes for the given path
-  it should "set the correct access modes" in {
-    if(!dat.flag)
-      assert(false)
+  it should "18. set the correct access modes" in {
+    //if(!dat.flag)
+    //  assert(false)
     val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
     val l = List(AccessMode.EXECUTE)
     p.setAccess(l)
@@ -494,14 +471,28 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //setFilePerm test-> sets posix file permissions
-  /*it should "create a file, change posix permissions, ensure they were set correctly" in {
-    if(!dat.flag)
-      assert(false)
-    val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
-    val s = Set(attribute.PosixFilePermission.GROUP_EXECUTE,attribute.PosixFilePermission.GROUP_READ,attribute.PosixFilePermission.GROUP_WRITE,attribute.PosixFilePermission.OTHERS_EXECUTE,attribute.PosixFilePermission.OTHERS_READ,attribute.PosixFilePermission.OTHERS_WRITE,attribute.PosixFilePermission.OWNER_EXECUTE,attribute.PosixFilePermission.OWNER_READ,attribute.PosixFilePermission.OWNER_WRITE).toSet
-    p.setFilePerm(s)
-    assert(p.checkAccess())
-  }*/
+//  it should "19. create a file, change posix permissions, ensure they were set correctly" in {
+//    val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
+//    val s = Set(attribute.PosixFilePermission.GROUP_EXECUTE,attribute.PosixFilePermission.GROUP_READ,attribute.PosixFilePermission.GROUP_WRITE,attribute.PosixFilePermission.OTHERS_EXECUTE,attribute.PosixFilePermission.OTHERS_READ,attribute.PosixFilePermission.OTHERS_WRITE,attribute.PosixFilePermission.OWNER_EXECUTE,attribute.PosixFilePermission.OWNER_READ,attribute.PosixFilePermission.OWNER_WRITE).toSet
+//    p.setFilePerm(s)
+//    assert(p.checkAccess())
+//  }
+
+  it should "20. not resolve symbolic links in toRealPath iff NOFOLLOW_LINKS option is used " in {
+    val p = Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
+    val q = Path(FileSystems.getDefault.getPath(dat.target + "testDir/")).createDirectory
+    Files.createSymbolicLink(p.jpath, q.jpath)
+    val pChild = p.resolve("targetFile")
+    //println("p child = " + pChild)
+    val qChild = q.resolve("targetFile").createFile
+    val shouldFail = Try(pChild.toRealPath(LinkOption.NOFOLLOW_LINKS))
+    val shouldSucceed = Try(pChild.toRealPath())
+    println(shouldSucceed.get)
+    if(!(shouldFail.isFailure && shouldSucceed.isSuccess))
+      dat.flag = false
+    assert(shouldFail == pChild && shouldSucceed == qChild)
+
+  }
 
 }
 
