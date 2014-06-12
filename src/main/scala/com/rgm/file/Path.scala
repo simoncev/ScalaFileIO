@@ -136,8 +136,6 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       Path(jpath.normalize)
   }
 
-  def toRealPath(options: LinkOption*): Path = Path(jpath.toRealPath(options : _*))
-
   def toURI: URI = jpath.toUri
 
   def toURL: URL = toURI.toURL
@@ -189,6 +187,8 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
 
   //--------------------------------------------------------------------------------------------------------------------
+
+  def toRealPath(options: LinkOption*): Path = Path(jpath.toRealPath(options : _*))
 
   def exists: Boolean = Files.exists(jpath)
 
