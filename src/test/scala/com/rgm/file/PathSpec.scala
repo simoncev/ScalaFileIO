@@ -5,13 +5,8 @@ import org.scalatest._
 
 import java.nio.file.{Path => JPath, _}
 import scala.collection.mutable._
-<<<<<<< HEAD
 import scala.util._
-import scala.collection.immutable.Range
-=======
-import scala.util.{Try, Random}
 
->>>>>>> 1583d048c709cf58e91e22b1dac2edc955ccf283
 
 /**
  * Created by sshivaprasad on 6/4/14.
