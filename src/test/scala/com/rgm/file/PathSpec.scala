@@ -6,7 +6,7 @@ import scala.language.reflectiveCalls
 
 import java.nio.file.{Path => JPath, _}
 import scala.collection.mutable._
-import scala.util.Random
+import scala.util.{Try, Random}
 
 /**
  * Created by sshivaprasad on 6/4/14.
@@ -274,6 +274,21 @@ trait FileSetupTeardown extends BeforeAndAfterEach with BeforeAndAfterAll{ this:
 class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   behavior of "File System"
+
+  it should "correct the case of paths with toRealPath" in {
+    for(i <- dat.fils.toList) {
+      val equivalentPath = Path(Path(i).path.toUpperCase)// + "/./thisShouldNotBeInThePath/..")
+      assert(equivalentPath.toRealPath() == Path(i))
+    }
+  }
+
+  it should "not resolve symbolic links when NOFOLLOW_LINKS option is used in toRealPath" in {
+    val p = new Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
+    val q = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
+    Files.createSymbolicLink(p.jpath, q.jpath)
+    val error = Try(p.toRealPath(LinkOption.NOFOLLOW_LINKS))
+    assert(!error.isFailure)
+  }
 
   //copyTo test
   it should "copy file to target location correctly" in {
