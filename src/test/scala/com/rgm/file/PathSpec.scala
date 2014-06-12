@@ -6,6 +6,7 @@ import org.scalatest._
 import java.nio.file.{Path => JPath, _}
 import scala.collection.mutable._
 import scala.util.{Try, Random}
+import scala.language.reflectiveCalls
 
 
 /**
@@ -220,7 +221,6 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
 
     val home = System.getProperty("user.home")
     val src = java.nio.file.Files.createTempDirectory("source").toString + "/"//home + "/source/"
-    println(src)
     val target =  java.nio.file.Files.createTempDirectory("target").toString + "/"
     val p = new Path(FileSystems.getDefault.getPath(src))
     val q = new Path(FileSystems.getDefault.getPath(target))
@@ -281,21 +281,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   behavior of "File System"
 
-  it should "correct the case of paths with toRealPath" in {
-    for(i <- dat.fils.toList) {
-      val equivalentPath = Path(Path(i).path.toUpperCase)// + "/./thisShouldNotBeInThePath/..")
-      assert(equivalentPath.toRealPath() == Path(i))
-    }
-  }
-
-  it should "not resolve symbolic links when NOFOLLOW_LINKS option is used in toRealPath" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
-    val q = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
-    Files.createSymbolicLink(p.jpath, q.jpath)
-    val error = Try(p.toRealPath(LinkOption.NOFOLLOW_LINKS))
-    assert(!error.isFailure)
-  }
-
   //copyTo test
   it should "copy file to target location correctly" in {
     //val fils = main.fils
@@ -304,8 +289,8 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
       assert(false)
     for(i <- dat.fils.toList)
     {
-      val tmp = new Path(i)
-      val trgt = new Path(FileSystems.getDefault.getPath(dat.target + i.toString.split("/").last))
+      val tmp = Path(i)
+      val trgt = Path(FileSystems.getDefault.getPath(dat.target + i.toString.split("/").last))
       try {
         tmp.copyTo(trgt)
       }
@@ -540,6 +525,34 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     p.setFilePerm(s)
     assert(p.checkAccess())
   }*/
+
+  it should "correct the case of paths with toRealPath" in {
+    for(i <- dat.fils.toList) {
+      val equivalentPath = Path(Path(i).path.toUpperCase)// + "/./thisShouldNotBeInThePath/..")
+      assert(equivalentPath.toRealPath() == Path(i).toRealPath())
+    }
+  }
+
+  it should "not resolve symbolic links in toRealPath iff NOFOLLOW_LINKS option is used " in {
+    val p = Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
+    println(p)
+    println(p.path)
+    println(p.jpath)
+    val q = Path(FileSystems.getDefault.getPath(dat.target + "testDir/")).createDirectory
+    println(q)
+    println(q.path)
+    println(q.jpath)
+    println(q.toRealPath())
+    Files.createSymbolicLink(p.jpath, q.jpath)
+    val pChild = p.resolve("targetFile")
+//    val qChild = q.resolve("targetFile").createFile
+//    val shouldFail = Try(pChild.toRealPath(LinkOption.NOFOLLOW_LINKS))
+//    val shouldSucceed = Try(pChild.toRealPath())
+    assert(p.isSymLink)
+    assert(pChild.parent.get.isSymLink)
+//    assert(shouldFail.isFailure)
+//    assert(shouldSucceed.isSuccess)
+  }
 
 }
 
