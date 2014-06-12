@@ -505,9 +505,9 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   it should "19. correct the case of paths with toRealPath" in {
     for(i <- dat.fils.toList) {
       val equivalentPath = Path(Path(i).path.toUpperCase)
-      if(!(equivalentPath.toRealPath() != Path(i)))
+      if(!(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i)))
         dat.flag = false
-      assert(equivalentPath.toRealPath() != Path(i))
+      assert(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i))
     }
   }
 
@@ -524,11 +524,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     assert(shouldFail.get.toString == pChild.path && shouldSucceed.get.toString != qChild.path)
   }
 
-  it should "correct the case of paths with toRealPath" in {
-    for(i <- dat.fils.toList) {
-      val equivalentPath = Path(Path(i).path.toUpperCase)// + "/./thisShouldNotBeInThePath/..")
-      assert(equivalentPath.toRealPath() == Path(i).toRealPath())
-    }
-  }
+
 }
 
