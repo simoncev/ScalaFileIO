@@ -52,13 +52,13 @@ object SyntaxSpec extends Properties("Path")
 
   // sibling, both string and path
   property("Sibling has same parent (called with Path)") =
-    forAll { (p: Path, q: Path) => (p.parent == None) || (p.sibling(q).startsWith(p.parent.get)) }
+    forAll { (p: Path, q: Path) => (p.parent == None || p.sibling(q).startsWith(p.parent.get)) }
 
   property("Siblings are both absolute/both relative (called with Path)") =
     forAll {(p: Path, q: Path) => p.isAbsolute == p.sibling(q).isAbsolute }
 
   property("Sibling has same parent (called with String)") =
-    forAll {(p: Path, q: String) => (p.parent == None) || (p.sibling(q).startsWith(p.parent.get))}
+    forAll {(p: Path, q: String) => (p.parent == None || p.sibling(q).startsWith(p.parent.get))}
 
   property("Siblings are both absolute/both relative (called with String)") =
     Path("/foo/bar").isAbsolute == Path("/foo/bar").sibling(Path("foo")).isAbsolute
