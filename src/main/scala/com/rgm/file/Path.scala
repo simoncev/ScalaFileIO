@@ -227,7 +227,6 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
 
   //checkAccess -> canWrite, canRead, canExecute
-  /* TOO MANY ERRORS WILL FIX LATER*/
   def checkAccess(modes: AccessMode*): Boolean = {
     modes forall {
       case EXECUTE  => jfile.canExecute()
