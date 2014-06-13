@@ -19,9 +19,9 @@ object Path {
   def apply(uri: URI): Path = new Path(Paths.get(uri))
   def apply(path: String): Path = new Path(Paths.get(path))
 
-  implicit def fromJPath(jpath: JPath): Path = apply(jpath)
-  implicit def fromJFile(jfile: JFile): Path = apply(jfile)
-  implicit def fromString(path: String): Path = apply(path)
+//  implicit def fromJPath(jpath: JPath): Path = apply(jpath)
+//  implicit def fromJFile(jfile: JFile): Path = apply(jfile)
+//  implicit def fromString(path: String): Path = apply(path)
 
   implicit def toFinder(path: Path): PathFinder = ???
 
@@ -51,7 +51,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def path: String = toString
 
-  def name: String = if (segments.isEmpty) path else segments.last.path
+  def name: String = jpath.getFileName.toString
 
   //last most segment without extension
   def simpleName: String =
@@ -65,40 +65,35 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
 
   def extension: Option[String] =
-    if(segments.isEmpty || name == "..")
+    if(name == ".." || name.tail.count(_ == '.') >= 1)
       None
-    else if( name.tail.count(_ == '.') >= 1 ) {
-      val idx = name.lastIndexWhere(_ == '.')
-      Some(name.drop(idx + 1))
-    }
     else
-      None
+      Some(name.drop(name.lastIndexWhere(_ == '.') + 1))
+
 
 
   def withExtension(extension: Option[String]): Path =
   {
-    if(extension.isEmpty || segments.isEmpty || path == "/")
-      this  //create a . file for extension  ""? what about Path("/")?
+    if(extension != None)
+      sibling(simpleName + "." + extension)
     else
-      Path(segments.init.mkString("/") +"/" + simpleName + "." + extension.get)
-  }
+      this
 
   // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
-  def segments: Seq[Path] =
-    if (this.equals(Path("/")))
-      List("/")
-    else if (equals(Path("")))
-      List()
-    else
-      path.split("/").map(_.concat("/")).map(Path(_))
+  def segments: Seq[Path] = segmentIterator.toSeq
 
   // just like segments
-  def segmentIterator: Iterator[Path] =  segments.iterator
+  def segmentIterator: Iterator[Path] =
+    if (isAbsolute)
+      Iterator(fileSystem.path("/")) ++ jpath.iterator().asScala.map(((p: JPath) => Path(p)))
+    else
+      jpath.iterator().asScala.map((p: JPath) => Path(p))
+
 
   // again, should count the root segment, if any
   def segmentCount: Int = segments.size
 
-  def root: Option[Path] = Option(jpath.getRoot).map(Path(_))
+  def root: Option[Path] = Option(Path(jpath.getRoot))
 
   // there is a good argument for having this method always return an unwrapped (non-null) Path. For example:
   //   Path("a").parent == Path("") or Path(".")
@@ -116,9 +111,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def startsWith(other: String): Boolean = jpath.startsWith(fileSystem.path(other).jpath)
 
-  def endsWith(other: Path): Boolean = jpath.endsWith(other)
+  def endsWith(other: Path): Boolean = jpath.endsWith(other.jpath)
 
-  def endsWith(other: String): Boolean = jpath.endsWith(fileSystem.path(other))
+  def endsWith(other: String): Boolean = jpath.endsWith(fileSystem.path(other).jpath)
 
   def isAbsolute: Boolean = jpath.isAbsolute
 
@@ -128,13 +123,10 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // should behave mostly like JPath.normalize but should correctly handle the empty path
   // (N.B. the scalax implementation is wrong too--the operation should be idempotent).
   def normalize: Path =
-  {
-    if(jpath.toString.equals("")) {
-      return ""
-    }
+    if(jpath.toString.equals(""))
+      fileSystem.path("")
     else
       Path(jpath.normalize)
-  }
 
   def toURI: URI = jpath.toUri
 
@@ -144,29 +136,27 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   // should behave like JPath.relativize (the scalax implementation is backwards and broken)
   // throws an error if you relativize relative and absolute paths
-  def relativize(other: Path): Path = jpath.relativize(other.jpath)
+  def relativize(other: Path): Path = Path(jpath.relativize(other.jpath))
 
-  def relativize(other: String): Path = jpath.relativize(fileSystem.path(other).jpath)
+  def relativize(other: String): Path = Path(jpath.relativize(fileSystem.path(other).jpath))
 
-  def relativeTo(base: Path): Path = base.relativize(this)
+  def relativeTo(base: Path): Path = Path(base.jpath.relativize(this.jpath))
 
-  def relativeTo(base: String): Path = fileSystem.path(base).relativize(this)
+  def relativeTo(base: String): Path = Path(fileSystem.path(base).jpath.relativize(this.jpath))
 
   // should behave like JPath.resolve except when `other` is an absolute path, in which case in should behave as if
   // `other` were actually a relative path (i.e. `other.relativeTo(other.root.get)`)
   // this is so that `path1 / path2` behaves exactly like `Path(path1.path + "/" + path2.path)`
   def resolve(other: Path): Path =
   {
-    if (other.isAbsolute && equals(Path("")))
-      other.relativeTo(other.root.get)
-    else if(other.isAbsolute)
-      Path(path + "/" + other.relativeTo(other.root.get))
+    if (other.isAbsolute)
+      jpath.resolve(other.jpath)
     else
       Path(jpath.resolve(other.jpath))
   }
 
   // as above
-  def resolve(other: String): Path = resolve(Path(other))
+  def resolve(other: String): Path = resolve(fileSystem.path(other))
 
   def / (other: Path): Path = resolve(other)
 
@@ -178,9 +168,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def sibling(other: Path): Path = {
     val sibl : Path = if (other.isAbsolute) Path(other.path.substring(1)) else other
     if (this.equals(Path("/")))
-      fileSystem.path("/.").jpath.resolveSibling(sibl.path)
+      Path(fileSystem.path("/.").jpath.resolveSibling(sibl.path))
     else
-      jpath.resolveSibling(sibl.path)
+      Path(jpath.resolveSibling(sibl.path))
   }
 
   def sibling(other: String): Path = sibling(Path(other))
@@ -244,13 +234,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def lastModified : FileTime = Files.getLastModifiedTime(jpath)
 
   //sets POSIX file permissions
-  def setFilePerm(perms: Set[PosixFilePermission]) : Path = Files.setPosixFilePermissions(jpath, perms.asJava)
+  def setFilePerm(perms: Set[PosixFilePermission]) : Path = Path(Files.setPosixFilePermissions(jpath, perms.asJava))
 
   //createFile
-  def createFile : Path = Files.createFile(jpath)
+  def createFile : Path = Path(Files.createFile(jpath))
 
   //createDirectory
-  def createDirectory : Path = Files.createDirectory(jpath)
+  def createDirectory : Path = Path(Files.createDirectory(jpath))
 
   //deleteIfExists
   def deleteIfExists : Boolean = Files.deleteIfExists(jpath)
@@ -300,7 +290,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   }
 
   //copyTo(source, target)
-  def copyTo(target: Path) : Path = Files.copy(jpath, target.jpath)
+  def copyTo(target: Path) : Path = Path(Files.copy(jpath, target.jpath))
 
 
   //moveFile
@@ -317,13 +307,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
           //@throws(classOf[IOException])
           override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult =
           {
-            Files.createDirectories(target.resolve(jpath.relativize(dir)).jpath)
+            Files.createDirectories(target.resolve(Path(jpath.relativize(dir)).jpath))
             FileVisitResult.CONTINUE
           }
 
           override def visitFile(file: JPath,attrs: BasicFileAttributes) : FileVisitResult =
           {
-            Files.copy(file, target.resolve(jpath.relativize(file)).jpath)
+            Files.copy(file, target.resolve(Path(jpath.relativize(file)).jpath))
             FileVisitResult.CONTINUE
           }
         })

@@ -11,7 +11,7 @@ import scala.math._
 object Generators {
   import Arbitrary.arbitrary
 
-  protected val legalChars = ('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') ++ List('_', '-', '+', '.', ' ') toList
+  protected val legalChars = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') ++ List('_', '-', '+', '.', ' ')).toList
 
   def sampleWithReplacement(seq: Seq[Char], n: Int): Seq[Char] = {
     if (n == 0)

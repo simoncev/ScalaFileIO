@@ -213,7 +213,7 @@ object SyntaxSpec extends Properties("Path")
 
 trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
   var dat =
-    new {
+    new Dat {
       var flag: Boolean = true
       var test_no: Int = 1
       var (src: String, target: String, dirs: ListBuffer[JPath] , fils: ListBuffer[JPath]) = ("","",new ListBuffer[JPath],new ListBuffer[JPath]) //setup
