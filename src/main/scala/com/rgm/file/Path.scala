@@ -180,76 +180,77 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def toRealPath(options: LinkOption*): Path = Path(jpath.toRealPath(options : _*))
 
-  def exists: Boolean = Files.exists(jpath)
+  def exists(): Boolean = Files.exists(jpath)
 
   def exists(options: LinkOption*): Boolean = Files.exists(jpath.toRealPath(options :_*))
 
-  def nonExistent: Boolean = Files.notExists(jpath) // not equivalent to `!exists`
+  def nonExistent(): Boolean = Files.notExists(jpath) 
 
   def nonExistent(options: LinkOption*): Boolean = Files.notExists(jpath.toRealPath(options : _*))
 
   def isSame(other: Path): Boolean = normalize == other.normalize
 
-  def size: Option[Long] = Option(Files.size(jpath))
+  def size(): Option[Long] = Option(Files.size(jpath))
 
-  def isDirectory: Boolean = Files.isDirectory(jpath)
+  def isDirectory(): Boolean = Files.isDirectory(jpath)
 
-  def isFile: Boolean = Files.isRegularFile(jpath) // == isRegularFile
+  def isFile(): Boolean = Files.isRegularFile(jpath)
 
-  def isSymLink: Boolean = Files.isSymbolicLink(jpath)
+  def isSymLink(): Boolean = Files.isSymbolicLink(jpath)
 
-  def isHidden: Boolean = Files.isHidden(jpath)
+  def isHidden(): Boolean = Files.isHidden(jpath)
 
-  def isReadable: Boolean = Files.isReadable(jpath)
+  def isReadable(): Boolean = Files.isReadable(jpath)
 
-  def isWritable: Boolean = Files.isWritable(jpath)
+  def isWritable(): Boolean = Files.isWritable(jpath)
 
-  def isExecutable: Boolean = Files.isExecutable(jpath)
+  def isExecutable(): Boolean = Files.isExecutable(jpath)
 
   // etc.
 
   //createTempFile
-  def createTempFile(prefix: String = null, suffix: String = null, attrs: FileAttribute[_]) : Path = Path(Files.createTempFile(jpath,prefix, suffix, attrs))
+  def createTempFile(prefix: String, suffix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempFile(jpath,prefix, suffix, attrs:_*))
 
 
   //createTempDir
-  def createTempDir(prefix: String = null, attrs: FileAttribute[_]) : Path = Path(Files.createTempDirectory(jpath, prefix, attrs))
+  def createTempDir(prefix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempDirectory(jpath, prefix, attrs:_*))
 
 
   //checkAccess -> canWrite, canRead, canExecute
   def checkAccess(modes: AccessMode*): Boolean = {
     modes forall {
-      case EXECUTE  => isExecutable
-      case READ  => isReadable
-      case WRITE  => isWritable
+      case EXECUTE  => isExecutable()
+      case READ  => isReadable()
+      case WRITE  => isWritable()
     }
   }
 
+  //sets the access modes
   def setAccess(accessModes:Iterable[AccessMode]) = {
     jfile.setReadable(accessModes exists {_==READ})
     jfile.setWritable(accessModes exists {_==WRITE})
     jfile.setExecutable(accessModes exists {_==EXECUTE})
   }
   //lastModified
-  def lastModified : FileTime = Files.getLastModifiedTime(jpath)
+  def lastModified(): FileTime = Files.getLastModifiedTime(jpath)
 
   //sets POSIX file permissions
   def setFilePerm(perms: Set[PosixFilePermission]) : Path = Path(Files.setPosixFilePermissions(jpath, perms.asJava))
 
   //createFile
-  def createFile : Path = Path(Files.createFile(jpath))
+  def createFile(): Path = Path(Files.createFile(jpath))
 
   //createDirectory
-  def createDirectory : Path = Path(Files.createDirectory(jpath))
+  def createDirectory(): Path = Path(Files.createDirectory(jpath))
 
   //deleteIfExists
-  def deleteIfExists : Boolean = Files.deleteIfExists(jpath)
+  def deleteIfExists(): Boolean = Files.deleteIfExists(jpath)
 
   //delete
-  def delete : Unit = Files.delete(jpath)
+  def delete() : Unit = Files.delete(jpath)
 
   //deleteRecursively
-  def deleteRecursively : Boolean =
+  def deleteRecursively(): Boolean =
   {
     //first check if it's a dir or file
     if(exists && isDirectory)
@@ -274,10 +275,10 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       )
       true
     }
-    else if(exists)
+    else if(exists())
     {
       try {
-        delete
+        delete()
         true
       } catch {
         case e: IOException => false
@@ -292,7 +293,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
 
   //moveFile
-  def moveFile(target: Path) : Unit = Files.move(jpath, target.jpath)
+  def moveFile(target: Path, options: CopyOption*) : Unit = Files.move(jpath, target.jpath, options:_*)
 
   //moveDirectory
   def moveDirectory(target: Path) : Unit =
