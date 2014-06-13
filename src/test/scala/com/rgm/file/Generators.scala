@@ -20,8 +20,6 @@ object Generators {
       Random.shuffle(seq).take(1) ++ sampleWithReplacement(seq, n-1)
   }
 
-  val genExtension: Gen[String] = Gen.alphaStr
-
   //Generate strings for building paths
   val genLegalCharsString: Gen[String] = Gen.chooseNum(1,10).map(n => sampleWithReplacement(legalChars, Random.nextInt(n)).mkString(""))
 

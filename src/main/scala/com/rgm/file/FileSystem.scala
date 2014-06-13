@@ -20,8 +20,7 @@ class FileSystem(jsystem : JFileSystem) {
 
   def fileStores : Iterable[FileStore] = jsystem.getFileStores.asScala
 
-  def path (segments : String *) : Path = jsystem.getPath(segments.head, segments.tail : _*)
-
+  def path (segments : String *) : Path = Path(jsystem.getPath(segments.head, segments.tail : _*))
 
   def pathFinder (syntaxAndPattern : String ): PathFinder = ???
 

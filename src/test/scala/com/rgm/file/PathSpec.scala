@@ -9,6 +9,7 @@ import scala.collection.mutable._
 
 import scala.util._
 import scala.language.reflectiveCalls
+import scala.language.postfixOps
 
 
 /**
@@ -38,9 +39,12 @@ object SyntaxSpec extends Properties("Path")
   property("extension has no periods") =
     forAll{ (p: Path) => if (p.extension == None) true else !p.extension.get.contains('.')}
 
+  property("No extension for hidden files with no other dots") =
+    forAll(genPath, Gen.alphaStr) { (p: Path, s: String) => p.resolve(s).extension == None}
+
   //properties for withExtension function
   property("withExtension'ed strings always have extensions unless path/extension are empty") =
-    forAll(genPath, genExtension){ (p: Path, s:String) =>
+    forAll(genPath, Gen.alphaStr){ (p: Path, s:String) =>
       if (p == Path("") || p == Path("/") || s == "")
         true
       else
@@ -502,14 +506,14 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 //    assert(p.checkAccess())
 //  }
 
-  it should "19. correct the case of paths with toRealPath" in {
-    for(i <- dat.fils.toList) {
-      val equivalentPath = Path(Path(i).path.toUpperCase)
-      if(!(equivalentPath.toRealPath() != Path(i)))
-        dat.flag = false
-      assert(equivalentPath.toRealPath() != Path(i))
-    }
-  }
+//  it should "19. correct the case of paths with toRealPath" in {
+//    for(i <- dat.fils.toList) {
+//      val equivalentPath = Path(Path(i).path.toUpperCase)
+//      if(!(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i)))
+//        dat.flag = false
+//      assert(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i))
+//    }
+//  }
 
   it should "20. not resolve symbolic links in toRealPath iff NOFOLLOW_LINKS option is used " in {
     val p = Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
@@ -521,14 +525,10 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     val shouldSucceed = Try(pChild.toRealPath())
     if(!(shouldFail.get.toString == pChild.path && shouldSucceed.get.toString != qChild.path))
       dat.flag = false
-    assert(shouldFail.get.toString == pChild.path && shouldSucceed.get.toString != qChild.path)
+    assert(shouldFail.get.toString == pChild.path)
+    assert(shouldSucceed.get.toString == qChild.toRealPath().toString)
   }
 
-  it should "correct the case of paths with toRealPath" in {
-    for(i <- dat.fils.toList) {
-      val equivalentPath = Path(Path(i).path.toUpperCase)// + "/./thisShouldNotBeInThePath/..")
-      assert(equivalentPath.toRealPath() == Path(i).toRealPath())
-    }
-  }
+
 }
 
