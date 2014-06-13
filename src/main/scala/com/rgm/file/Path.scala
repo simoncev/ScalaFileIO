@@ -51,7 +51,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def path: String = toString
 
-  def name: String = jpath.getFileName.toString
+  def name: String = if (path == "/") path else jpath.getFileName.toString
 
   //last most segment without extension
   def simpleName: String =
@@ -65,7 +65,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
 
   def extension: Option[String] =
-    if(name == ".." || name.tail.count(_ == '.') == 0)
+    if(name == ".." || path == "" || name.tail.count(_ == '.') == 0)
       None
     else
       Some(name.drop(name.lastIndexWhere(_ == '.') + 1))
@@ -78,70 +78,71 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     else
       this
 
-    // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
-    def segments: Seq[Path] = segmentIterator.toSeq
 
-    // just like segments
-    def segmentIterator: Iterator[Path] =
-      if (isAbsolute)
-        Iterator(fileSystem.path("/")) ++ jpath.iterator().asScala.map(Path(_))
-      else
-        jpath.iterator().asScala.map(Path(_))
+  // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
+  def segments: Seq[Path] = segmentIterator.toSeq
+
+  // just like segments
+  def segmentIterator: Iterator[Path] =
+    if (isAbsolute)
+      Iterator(fileSystem.path("/")) ++ jpath.iterator().asScala.map(Path(_))
+    else
+      jpath.iterator().asScala.map(Path(_))
 
 
-    // again, should count the root segment, if any
-    def segmentCount: Int = if (isAbsolute) jpath.getNameCount + 1 else jpath.getNameCount
+  // again, should count the root segment, if any
+  def segmentCount: Int = if (isAbsolute) jpath.getNameCount + 1 else jpath.getNameCount
 
-    def root: Option[Path] = Option(Path(jpath.getRoot))
+  def root: Option[Path] = if (jpath.getRoot == null) None else Some(Path(jpath.getRoot))
 
-    // there is a good argument for having this method always return an unwrapped (non-null) Path. For example:
-    //   Path("a").parent == Path("") or Path(".")
-    //   Path("").parent == Path("..")
-    //   Path("..").parent == Path("../..")
-    //   Path("/").parent == Path("/")
-    // is this sensible, or does it present serious problems? it would certainly be convenient.
-    // this breaks on ".." vs "../.." and "." and becomes inconsistent...
+  // there is a good argument for having this method always return an unwrapped (non-null) Path. For example:
+  //   Path("a").parent == Path("") or Path(".")
+  //   Path("").parent == Path("..")
+  //   Path("..").parent == Path("../..")
+  //   Path("/").parent == Path("/")
+  // is this sensible, or does it present serious problems? it would certainly be convenient.
+  // this breaks on ".." vs "../.." and "." and becomes inconsistent...
 
-    def parent: Option[Path] = if (jpath.getParent == null) Option(null) else Option(Path(jpath.getParent))
+  def parent: Option[Path] = if (jpath.getParent == null) Option(null) else Option(Path(jpath.getParent))
 
-    def subpath(begin: Int, end: Int): Path = Path(jpath.subpath(begin, end))
+  def subpath(begin: Int, end: Int): Path = Path(jpath.subpath(begin, end))
 
-    def startsWith(other: Path): Boolean = jpath.startsWith(other.jpath)
+  def startsWith(other: Path): Boolean = jpath.startsWith(other.jpath)
 
-    def startsWith(other: String): Boolean = jpath.startsWith(fileSystem.path(other).jpath)
+  def startsWith(other: String): Boolean = jpath.startsWith(fileSystem.path(other).jpath)
 
-    def endsWith(other: Path): Boolean = jpath.endsWith(other.jpath)
+  def endsWith(other: Path): Boolean = jpath.endsWith(other.jpath)
 
-    def endsWith(other: String): Boolean = jpath.endsWith(fileSystem.path(other).jpath)
+  def endsWith(other: String): Boolean = jpath.endsWith(fileSystem.path(other).jpath)
 
-    def isAbsolute: Boolean = jpath.isAbsolute
+  def isAbsolute: Boolean = jpath.isAbsolute
 
-    //this can't be syntactic function, needs to search filesystem for absolute path
-    def toAbsolute: Path = Path(jpath.toAbsolutePath)
+  //this can't be syntactic function, needs to search filesystem for absolute path
+  def toAbsolute: Path = Path(jpath.toAbsolutePath)
 
-    // should behave mostly like JPath.normalize but should correctly handle the empty path
-    // (N.B. the scalax implementation is wrong too--the operation should be idempotent).
-    def normalize: Path =
-      if (jpath.toString.equals(""))
-        fileSystem.path("")
-      else
-        Path(jpath.normalize)
+  // should behave mostly like JPath.normalize but should correctly handle the empty path
+  // (N.B. the scalax implementation is wrong too--the operation should be idempotent).
+  def normalize: Path =
+    if (jpath.toString.equals(""))
+      fileSystem.path("")
+    else
+      Path(jpath.normalize)
 
-    def toURI: URI = jpath.toUri
+  def toURI: URI = jpath.toUri
 
-    def toURL: URL = toURI.toURL
+  def toURL: URL = toURI.toURL
 
-    def jfile: JFile = jpath.toFile
+  def jfile: JFile = jpath.toFile
 
-    // should behave like JPath.relativize (the scalax implementation is backwards and broken)
-    // throws an error if you relativize relative and absolute paths
-    def relativize(other: Path): Path = Path(jpath.relativize(other.jpath))
+  // should behave like JPath.relativize (the scalax implementation is backwards and broken)
+  // throws an error if you relativize relative and absolute paths
+  def relativize(other: Path): Path = Path(jpath.relativize(other.jpath))
 
-    def relativize(other: String): Path = Path(jpath.relativize(fileSystem.path(other).jpath))
+  def relativize(other: String): Path = Path(jpath.relativize(fileSystem.path(other).jpath))
 
-    def relativeTo(base: Path): Path = base.relativize(this)
+  def relativeTo(base: Path): Path = base.relativize(this)
 
-    def relativeTo(base: String): Path = fileSystem.path(base).relativize(this)
+  def relativeTo(base: String): Path = fileSystem.path(base).relativize(this)
 
   // should behave like JPath.resolve except when `other` is an absolute path, in which case in should behave as if
   // `other` were actually a relative path (i.e. `other.relativeTo(other.root.get)`)
@@ -149,7 +150,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def resolve(other: Path): Path =
   {
     if (other.isAbsolute)
-      Path(jpath.resolve(other.relativeTo(root.get).jpath))
+      Path(jpath.resolve(other.relativeTo(other.root.get).jpath))
     else
       Path(jpath.resolve(other.jpath))
   }
@@ -166,13 +167,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // has no parent and `other` is on a different file system
   def sibling(other: Path): Path = {
     val sibl : Path = if (other.isAbsolute) Path(other.path.substring(1)) else other
-    if (this.equals(Path("/")))
+    if (this == (Path("/")))
       Path(fileSystem.path("/.").jpath.resolveSibling(sibl.path))
     else
       Path(jpath.resolveSibling(sibl.path))
   }
 
-  def sibling(other: String): Path = sibling(Path(other))
+  def sibling(other: String): Path = sibling(fileSystem.path(other))
 
 
   //--------------------------------------------------------------------------------------------------------------------
