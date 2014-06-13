@@ -8,8 +8,6 @@ import scala.collection.mutable._
 
 
 import scala.util._
-import scala.language.reflectiveCalls
-import scala.language.postfixOps
 
 
 /**
@@ -216,32 +214,26 @@ object SyntaxSpec extends Properties("Path")
 }
 
 trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
-  var dat =
-    new Dat {
-      var flag: Boolean = true
-      var test_no: Int = 1
-      var (src: String, target: String, dirs: ListBuffer[JPath] , fils: ListBuffer[JPath]) = ("","",new ListBuffer[JPath],new ListBuffer[JPath]) //setup
-    }
+
+  var flagGlobal: Boolean = false
+  var testNo: Int = 1
+  var (srcGlobal: String, targetGlobal: String, dirsGlobal: ListBuffer[JPath] , filsGlobal: ListBuffer[JPath]) = ("","",new ListBuffer[JPath],new ListBuffer[JPath])
 
   def setup : (String, String, ListBuffer[JPath], ListBuffer[JPath]) =
   {
-
-    val home = System.getProperty("user.home")
-
-    val src = java.nio.file.Files.createTempDirectory("source_" + dat.test_no + "_").toString + "/"
-    val target =  java.nio.file.Files.createTempDirectory("target_" + dat.test_no + "_").toString + "/"
-    if(dat.test_no == 1)
+    val src = java.nio.file.Files.createTempDirectory("source_" + testNo + "_").toString + "/"
+    val target =  java.nio.file.Files.createTempDirectory("target_" + testNo + "_").toString + "/"
+    if(testNo == 1)
       println("File trees can be found in: " + src.split("/").init.mkString("/") + "/" + "\nStructure of folder <source/target>_<test number>_ if test fails")
-    dat.test_no += 1
+    testNo += 1
     val p = new Path(FileSystems.getDefault.getPath(src))
     val q = new Path(FileSystems.getDefault.getPath(target))
-    if(p.exists)
-      p.deleteRecursively
-    p.createDirectory
-    if(q.exists)
-      q.deleteRecursively
-    q.createDirectory
-    //println("from setup - " + p.path)
+    if(p.exists())
+      p.deleteRecursively()
+    p.createDirectory()
+    if(q.exists())
+      q.deleteRecursively()
+    q.createDirectory()
     val (dirs,fils) = createFS(p)
     (src, target, dirs, fils)
   }
@@ -262,29 +254,27 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
   }
 
 
-  override def afterEach = {
-    try super.afterEach
+  override def afterEach() = {
+    try super.afterEach()
     finally{
-      if(dat.flag) {
-        val p = new Path(FileSystems.getDefault.getPath(dat.src))
-        val q = new Path(FileSystems.getDefault.getPath(dat.target))
-        //println("from after - " + p.path)
-        p.deleteRecursively
-        q.deleteRecursively
+      if(flagGlobal) {
+        val p = new Path(FileSystems.getDefault.getPath(srcGlobal))
+        val q = new Path(FileSystems.getDefault.getPath(targetGlobal))
+        p.deleteRecursively()
+        q.deleteRecursively()
       }
-      else dat.flag = true
     }
   }
-  override def beforeEach = {
-    try super.beforeEach
+  override def beforeEach() = {
+    try super.beforeEach()
     finally{
-      if(dat.flag) {
-        var (src, target, dirs, fils) = setup
-        dat.src = src
-        dat.target = target
-        dat.dirs = dirs
-        dat.fils = fils
-      }
+      flagGlobal = false
+      val (src, target, dirs, fils) = setup
+      srcGlobal = src
+      targetGlobal = target
+      dirsGlobal = dirs
+      filsGlobal = fils
+
     }
   }
 
@@ -296,12 +286,10 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //copyTo test
   it should "1. copy file to target location correctly" in {
-    //val fils = main.fils
-    //val target = main.target
-    for(i <- dat.fils.toList)
+    for(i <- filsGlobal.toList)
     {
       val tmp = Path(i)
-      val trgt = Path(FileSystems.getDefault.getPath(dat.target + i.toString.split("/").last))
+      val trgt = Path(FileSystems.getDefault.getPath(targetGlobal + i.toString.split("/").last))
       try {
         tmp.copyTo(trgt)
       }
@@ -309,225 +297,199 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
         case nsfe: NoSuchFileException => assert(false)
       }
     }
-    for(x <- dat.fils.toList)
+    for(x <- filsGlobal.toList)
     {
-      val tmp = new Path(FileSystems.getDefault.getPath(dat.target + x.toString.split("/").last))
-      if(!(tmp.exists && tmp.isFile && (tmp.size.get == 0)))
-        dat.flag = false
-      assert(tmp.exists && tmp.isFile && (tmp.size.get == 0))
+      val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
+      assert(tmp.exists() && tmp.isFile() && (tmp.size().get == 0))
     }
+    flagGlobal = true
   }
 
   //moveTo test
   it should "2. moveFile to target location correctly" in {
-    for(i <- dat.fils.toList)
+    for(i <- filsGlobal.toList)
     {
       val tmp = new Path(i)
       try {
-        tmp.moveFile(dat.target + i.toString.split("/").last)
+        tmp.moveFile(Path(targetGlobal + i.toString.split("/").last))
       }
       catch {
         case nsfe: NoSuchFileException => assert(false)
       }
     }
-    for(x <- dat.fils.toList)
+    for(x <- filsGlobal.toList)
     {
-      val tmp = new Path(FileSystems.getDefault.getPath(dat.target + x.toString.split("/").last))
+      val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
       val tmp2 = new Path(x)
-      if(!(tmp.exists && tmp.isFile && tmp2.nonExistent && (tmp.size.get == 0)))
-        dat.flag = false
-      assert(tmp.exists && tmp.isFile && tmp2.nonExistent && (tmp.size.get == 0))
+      assert(tmp.exists() && tmp.isFile() && tmp2.nonExistent() && (tmp.size().get == 0))
     }
-
+    flagGlobal = true
   }
 
   //moveDirectory test
   it should "3. move directory to target location correctly" in {
-    for(i <- dat.dirs.toList)
+    for(i <- dirsGlobal.toList)
     {
       val tmp = new Path(i)
       try {
-        tmp.moveDirectory(dat.target + i.toString.split("/").last)
+        tmp.moveDirectory(Path(targetGlobal + i.toString.split("/").last))
       }
       catch {
         case nsfe: NoSuchFileException => assert(false)
       }
     }
-    for(x <- dat.dirs.toList)
+    for(x <- dirsGlobal.toList)
     {
-      val tmp = new Path(FileSystems.getDefault.getPath(dat.target + x.toString.split("/").last))
-      if (!(tmp.exists && tmp.isDirectory))
-        dat.flag = false
-      assert(tmp.exists && tmp.isDirectory)
+      val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
+      assert(tmp.exists() && tmp.isDirectory())
     }
+    flagGlobal = true
   }
 
 
   //deleteRecursively test
   it should "4. recursively delete the 'src' directory where the file tree is constructed" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.src))
-    p.deleteRecursively
-    if(!p.nonExistent)
-      dat.flag = false
-    assert(p.nonExistent)
+    val p = new Path(FileSystems.getDefault.getPath(srcGlobal))
+    p.deleteRecursively()
+    assert(p.nonExistent())
+    flagGlobal = true
   }
 
   //createTempFile test
   it should "5. create temp file in target and check its existence" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
-    if(!p.exists)
-      dat.flag = false
-    assert(p.exists)
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
+    assert(p.exists())
+    flagGlobal = true
   }
 
   //createTempDir test
   it should "6. create temp dir in target and check its existence" in {
-    if(!dat.flag)
-      assert(false)
-    val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempDir("test")
-    if(!p.exists)
-      dat.flag = false
-    assert(p.exists)
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempDir("test")
+    assert(p.exists())
+    flagGlobal = true
   }
 
   //delete test
   it should "7. create a temp file then delete it and check its existence" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
-    p.delete
-    if(!p.nonExistent)
-      dat.flag = false
-    assert(p.nonExistent)
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
+    p.delete()
+    assert(p.nonExistent())
+    flagGlobal = true
   }
 
   //deleteIfExists test
   it should "8. delete a file if it exists else fail" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
-    val q = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test2", ".tmp")
-    p.delete
-//    if(!(!p.exists && q.nonExistent))
-//      dat.flag = false
-//
-//    assert(!p.deleteIfExists && q.deleteIfExists)
-//
-    if(!p.nonExistent)
-      dat.flag = false
-    assert(p.nonExistent)
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
+    p.delete()
+    assert(p.nonExistent())
+    flagGlobal = true
   }
 
   //createDirectory
   it should "9. create a directory and check its existence" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "test")).createDirectory
-    if(!p.exists)
-      dat.flag = false
-    assert(p.exists)
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal + "test")).createDirectory()
+    assert(p.exists())
+    flagGlobal = true
   }
 
   //createFile
   it should "10. create a file and check its existence" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
-    if(!p.exists)
-      dat.flag = false
-    assert(p.exists)
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal + "test.tmp")).createFile()
+    assert(p.exists())
+    flagGlobal = true
   }
 
   //isSame test
   it should "11. check if the file is the same" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
-    if(!p.isSame(p))
-      dat.flag = false
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal + "test.tmp")).createFile()
     assert(p.isSame(p))
+    flagGlobal = true
   }
 
   //size test
   it should "12. ensure temp file size is 0" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
-    if(p.size.get != 0)
-      dat.flag = false
-    assert(p.size.get === 0)
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal + "test.tmp")).createFile()
+    assert(p.size().get === 0)
+    flagGlobal = true
   }
 
   //isReadable test
   it should "13. create a temp file and check if it is readable-> true" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
-    if(!p.isReadable)
-      dat.flag = false
-    assert(p.isReadable)
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal + "test.tmp")).createFile()
+    assert(p.isReadable())
+    flagGlobal = true
   }
 
   //isWritable test
   it should "14. create a temp file and check if it is writable-> true" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
-    if(!p.isWritable)
-      dat.flag = false
-    assert(p.isWritable)
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal + "test.tmp")).createFile()
+    assert(p.isWritable())
+    flagGlobal = true
   }
 
   //isExecutable test
   it should "15. create a temp file and check if it is executable-> false" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
-    if(p.isExecutable)
-      dat.flag = false
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal + "test.tmp")).createFile()
     assert(!p.isExecutable)
+    flagGlobal = true
   }
 
   //isSymbolicLink test
   it should "16. creates a SymLink using NIO and ensures it is a symbolic link" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
-    val q = new Path(FileSystems.getDefault.getPath(dat.target + "test.tmp")).createFile
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal + "tmp.link"))
+    val q = new Path(FileSystems.getDefault.getPath(targetGlobal + "test.tmp")).createFile()
     Files.createSymbolicLink(p.jpath,q.jpath)
-    if(!p.isSymLink)
-      dat.flag = false
-    assert(p.isSymLink)
+    assert(p.isSymLink())
+    flagGlobal = true
   }
 
   //checkAccess test=create tmp file(only read & write access) -> ensure READ/WRITE and no EXECUTE
   it should "17. creates a tmp file and checks permissions" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
-    if(!(p.checkAccess(AccessMode.READ) && p.checkAccess(AccessMode.WRITE) && !p.checkAccess(AccessMode.EXECUTE)))
-      dat.flag = false
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
     assert(p.checkAccess(AccessMode.READ) && p.checkAccess(AccessMode.WRITE) && !p.checkAccess(AccessMode.EXECUTE))
+    flagGlobal = true
   }
 
   //access sets access modes for the given path
   it should "18. set the correct access modes" in {
-    val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
+    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
     val l = List(AccessMode.EXECUTE)
     p.setAccess(l)
-    if(!p.checkAccess(AccessMode.EXECUTE))
-      dat.flag = false
     assert(p.checkAccess(AccessMode.EXECUTE))
+    flagGlobal = true
+  }
+
+  it should "20. not resolve symbolic links in toRealPath iff NOFOLLOW_LINKS option is used " in {
+    val p = Path(FileSystems.getDefault.getPath(targetGlobal + "tmp.link"))
+    val q = Path(FileSystems.getDefault.getPath(targetGlobal + "testDir/")).createDirectory()
+    Files.createSymbolicLink(p.jpath, q.jpath)
+    val pChild = p.resolve("targetFile")
+    val qChild = q.resolve("targetFile").createFile()
+    val shouldFail = Try(pChild.toRealPath(LinkOption.NOFOLLOW_LINKS))
+    val shouldSucceed = Try(pChild.toRealPath())
+    assert(shouldFail.get.toString == pChild.path)
+    assert(shouldSucceed.get.toString == qChild.toRealPath().toString)
+    flagGlobal = true
   }
 
   //setFilePerm test-> sets posix file permissions
 //  it should "19. create a file, change posix permissions, ensure they were set correctly" in {
-//    val p = new Path(FileSystems.getDefault.getPath(dat.target)).createTempFile("test", ".tmp")
+//    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
 //    val s = Set(attribute.PosixFilePermission.GROUP_EXECUTE,attribute.PosixFilePermission.GROUP_READ,attribute.PosixFilePermission.GROUP_WRITE,attribute.PosixFilePermission.OTHERS_EXECUTE,attribute.PosixFilePermission.OTHERS_READ,attribute.PosixFilePermission.OTHERS_WRITE,attribute.PosixFilePermission.OWNER_EXECUTE,attribute.PosixFilePermission.OWNER_READ,attribute.PosixFilePermission.OWNER_WRITE).toSet
 //    p.setFilePerm(s)
 //    assert(p.checkAccess())
 //  }
 
 //  it should "19. correct the case of paths with toRealPath" in {
-//    for(i <- dat.fils.toList) {
+//    for(i <- filsGlobal.toList) {
 //      val equivalentPath = Path(Path(i).path.toUpperCase)
 //      if(!(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i)))
-//        dat.flag = false
+//        flagGlobal = false
 //      assert(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i))
 //    }
 //  }
 
-  it should "20. not resolve symbolic links in toRealPath iff NOFOLLOW_LINKS option is used " in {
-    val p = Path(FileSystems.getDefault.getPath(dat.target + "tmp.link"))
-    val q = Path(FileSystems.getDefault.getPath(dat.target + "testDir/")).createDirectory
-    Files.createSymbolicLink(p.jpath, q.jpath)
-    val pChild = p.resolve("targetFile")
-    val qChild = q.resolve("targetFile").createFile
-    val shouldFail = Try(pChild.toRealPath(LinkOption.NOFOLLOW_LINKS))
-    val shouldSucceed = Try(pChild.toRealPath())
-    if(!(shouldFail.get.toString == pChild.path && shouldSucceed.get.toString != qChild.path))
-      dat.flag = false
-    assert(shouldFail.get.toString == pChild.path)
-    assert(shouldSucceed.get.toString == qChild.toRealPath().toString)
-  }
+
 
 
 }
