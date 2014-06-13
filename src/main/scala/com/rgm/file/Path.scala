@@ -19,9 +19,9 @@ object Path {
   def apply(uri: URI): Path = new Path(Paths.get(uri))
   def apply(path: String): Path = new Path(Paths.get(path))
 
-  implicit def fromJPath(jpath: JPath): Path = apply(jpath)
-  implicit def fromJFile(jfile: JFile): Path = apply(jfile)
-  implicit def fromString(path: String): Path = apply(path)
+//  implicit def fromJPath(jpath: JPath): Path = apply(jpath)
+//  implicit def fromJFile(jfile: JFile): Path = apply(jfile)
+//  implicit def fromString(path: String): Path = apply(path)
 
   implicit def toFinder(path: Path): PathFinder = ???
 
@@ -86,7 +86,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
   def segments: Seq[Path] =
     if (this.equals(Path("/")))
-      List("/")
+      List(Path("/"))
     else if (equals(Path("")))
       List()
     else
@@ -116,9 +116,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def startsWith(other: String): Boolean = jpath.startsWith(fileSystem.path(other).jpath)
 
-  def endsWith(other: Path): Boolean = jpath.endsWith(other)
+  def endsWith(other: Path): Boolean = jpath.toString.toLowerCase.endsWith(other.name)
 
-  def endsWith(other: String): Boolean = jpath.endsWith(fileSystem.path(other))
+  def endsWith(other: String): Boolean = jpath.toString.toLowerCase.endsWith(other)
 
   def isAbsolute: Boolean = jpath.isAbsolute
 
@@ -129,9 +129,8 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // (N.B. the scalax implementation is wrong too--the operation should be idempotent).
   def normalize: Path =
   {
-    if(jpath.toString.equals("")) {
-      return ""
-    }
+    if(jpath.toString.equals(""))
+       Path("")
     else
       Path(jpath.normalize)
   }
@@ -144,9 +143,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   // should behave like JPath.relativize (the scalax implementation is backwards and broken)
   // throws an error if you relativize relative and absolute paths
-  def relativize(other: Path): Path = jpath.relativize(other.jpath)
+  def relativize(other: Path): Path = Path(jpath.relativize(other.jpath))
 
-  def relativize(other: String): Path = jpath.relativize(fileSystem.path(other).jpath)
+  def relativize(other: String): Path = Path(jpath.relativize(fileSystem.path(other).jpath))
 
   def relativeTo(base: Path): Path = base.relativize(this)
 
@@ -178,9 +177,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def sibling(other: Path): Path = {
     val sibl : Path = if (other.isAbsolute) Path(other.path.substring(1)) else other
     if (this.equals(Path("/")))
-      fileSystem.path("/.").jpath.resolveSibling(sibl.path)
+      Path(fileSystem.path("/.").jpath.resolveSibling(sibl.path))
     else
-      jpath.resolveSibling(sibl.path)
+      Path(jpath.resolveSibling(sibl.path))
   }
 
   def sibling(other: String): Path = sibling(Path(other))
@@ -219,19 +218,19 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // etc.
 
   //createTempFile
-  def createTempFile(prefix: String, suffix: String /*deleteOnExit: Boolean NOT SURE IF NEEDED*/) : Path = Files.createTempFile(jpath,prefix, suffix)
+  def createTempFile(prefix: String = null, suffix: String = null, attrs: FileAttribute[_]) : Path = Path(Files.createTempFile(jpath,prefix, suffix, attrs))
 
 
   //createTempDir
-  def createTempDir(prefix: String /*FILE ATTRIBUTES???*/ ) : Path = Files.createTempDirectory(jpath, prefix)
+  def createTempDir(prefix: String = null, attrs: FileAttribute[_]) : Path = Path(Files.createTempDirectory(jpath, prefix, attrs))
 
 
   //checkAccess -> canWrite, canRead, canExecute
   def checkAccess(modes: AccessMode*): Boolean = {
     modes forall {
-      case EXECUTE  => jfile.canExecute()
-      case READ  => jfile.canRead()
-      case WRITE  => jfile.canWrite()
+      case EXECUTE  => isExecutable
+      case READ  => isReadable
+      case WRITE  => isWritable
     }
   }
 
@@ -244,13 +243,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def lastModified : FileTime = Files.getLastModifiedTime(jpath)
 
   //sets POSIX file permissions
-  def setFilePerm(perms: Set[PosixFilePermission]) : Path = Files.setPosixFilePermissions(jpath, perms.asJava)
+  def setFilePerm(perms: Set[PosixFilePermission]) : Path = Path(Files.setPosixFilePermissions(jpath, perms.asJava))
 
   //createFile
-  def createFile : Path = Files.createFile(jpath)
+  def createFile : Path = Path(Files.createFile(jpath))
 
   //createDirectory
-  def createDirectory : Path = Files.createDirectory(jpath)
+  def createDirectory : Path = Path(Files.createDirectory(jpath))
 
   //deleteIfExists
   def deleteIfExists : Boolean = Files.deleteIfExists(jpath)
@@ -270,10 +269,8 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
           //@throws(classOf[IOException])
           override def postVisitDirectory(dir: JPath, e: IOException) : FileVisitResult =
           {
-            if(e == None)
-            {
+            if(e != null)
               throw e
-            }
             else
             {
               Files.delete(dir)
@@ -300,7 +297,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   }
 
   //copyTo(source, target)
-  def copyTo(target: Path) : Path = Files.copy(jpath, target.jpath)
+  def copyTo(target: Path) : Path = Path(Files.copy(jpath, target.jpath))
 
 
   //moveFile
@@ -317,13 +314,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
           //@throws(classOf[IOException])
           override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult =
           {
-            Files.createDirectories(target.resolve(jpath.relativize(dir)).jpath)
+            Files.createDirectories(target.resolve(Path(jpath.relativize(dir))).jpath)
             FileVisitResult.CONTINUE
           }
 
           override def visitFile(file: JPath,attrs: BasicFileAttributes) : FileVisitResult =
           {
-            Files.copy(file, target.resolve(jpath.relativize(file)).jpath)
+            Files.copy(file, target.resolve(Path(jpath.relativize(file))).jpath)
             FileVisitResult.CONTINUE
           }
         })
