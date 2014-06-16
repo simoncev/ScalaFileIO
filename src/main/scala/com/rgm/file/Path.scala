@@ -294,7 +294,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   }
 
   //copyTo(source, target)
-  def copyTo(target: Path) : Path = Path(Files.copy(jpath, target.jpath))
+  def copyTo(target: Path, options: CopyOption*) : Path = Path(Files.copy(jpath, target.jpath, options:_*))
 
 
   //moveFile
