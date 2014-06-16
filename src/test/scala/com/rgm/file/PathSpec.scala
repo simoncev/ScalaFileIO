@@ -372,7 +372,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     for(x <- dirsGlobal.toList)
     {
       val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
-      assert(tmp.exists() && tmp.isDirectory())
+      assert(!tmp.exists() && tmp.isDirectory())
     }
     flagGlobal = true
   }
@@ -502,6 +502,39 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     assert(shouldSucceed.get.toString == qChild.toRealPath().toString)
     flagGlobal = true
   }
+
+  it should "20. copy then copy with replace" in {
+    for(i <- filsGlobal.toList)
+    {
+      val tmp = new Path(i)
+      try {
+        tmp.copyTo(Path(targetGlobal + i.toString.split("/").last))
+      }
+      catch {
+        case nsfe: NoSuchFileException => assert(false)
+      }
+    }
+
+    for(i <- filsGlobal.toList)
+    {
+      val tmp = new Path(i)
+      try {
+        tmp.copyTo(Path(targetGlobal + i.toString.split("/").last), StandardCopyOption.REPLACE_EXISTING)
+      }
+      catch {
+        case nsfe: NoSuchFileException => assert(false)
+      }
+    }
+
+    for(x <- filsGlobal.toList)
+    {
+      val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
+      val tmp2 = new Path(x)
+      assert(tmp.exists() && tmp.isFile() && tmp2.exists() && (tmp.size().get == 0))
+    }
+    flagGlobal = true
+  }
+
 
   //setFilePerm test-> sets posix file permissions
 //  it should "19. create a file, change posix permissions, ensure they were set correctly" in {
