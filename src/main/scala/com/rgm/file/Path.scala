@@ -59,11 +59,8 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     if(extension == None)
       name
     else {
-      val idx = name.lastIndexWhere(_ == '.')
-      name.dropRight(name.size - idx)
+      name.dropRight(name.size - name.lastIndexWhere(_ == '.'))
     }
-
-
 
   def extension: Option[String] =
     if(name == ".." || path == "" || name.tail.count(_ == '.') == 0)
@@ -71,14 +68,11 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     else
       Some(name.drop(name.lastIndexWhere(_ == '.') + 1))
 
-
-
   def withExtension(extension: Option[String]): Path =
     if (extension != None)
       sibling(simpleName + "." + extension)
     else
       this
-
 
   // segments should probably include the root segment, if any (like scalax but unlike Java NIO)
   def segments: Seq[Path] = segmentIterator.toSeq
@@ -89,7 +83,6 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       Iterator(fileSystem.path(fileSystem.separator)) ++ jpath.iterator().asScala.map(Path(_))
     else
       jpath.iterator().asScala.map(Path(_))
-
 
   // again, should count the root segment, if any
   def segmentCount: Int = if (isAbsolute) jpath.getNameCount + 1 else jpath.getNameCount
@@ -167,10 +160,12 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // (for consistency with resolve). the NIO implementation also seems dubious when `this` is the root or when `this`
   // has no parent and `other` is on a different file system
   def sibling(other: Path): Path = {
-    if (other.isAbsolute)
-      Path(jpath.resolveSibling(other.relativeTo(other.root.get).jpath))
+    if (this == root)
+      throw new IOException("Root has no sibling")
+    else if (parent == None)
+      fileSystem.path("").resolve(other)
     else
-      Path(jpath.resolveSibling(other.jpath))
+      parent.get.resolve(other)
 
 //    val sibl : Path = if (other.isAbsolute) Path(other.path.substring(1)) else other
 //    if (this == (Path(fileSystem.separator)))
@@ -216,10 +211,8 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //createTempFile
   def createTempFile(prefix: String, suffix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempFile(jpath,prefix, suffix, attrs:_*))
 
-
   //createTempDir
   def createTempDir(prefix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempDirectory(jpath, prefix, attrs:_*))
-
 
   //checkAccess -> canWrite, canRead, canExecute
   def checkAccess(modes: AccessMode*): Boolean = {
