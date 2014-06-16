@@ -15,11 +15,11 @@ object Path {
   def apply(jpath: JPath): Path = new Path(jpath)
   def apply(jfile: JFile): Path = new Path(jfile.toPath)
 
-  implicit val defaultFileSys: JFileSystem = FileSystems.getDefault
+  implicit val defaultFileSys: FileSystem = FileSystem(FileSystems.getDefault)
   // it might be better if these methods took an implicit FileSystem rather than relying on java.nio.file..Paths
   // (which assumes the default FileSystem)
   def apply(uri: URI): Path = new Path(Paths.get(uri))
-  def apply(path: String)(implicit fileSys: JFileSystem = defaultFileSys): Path = new Path(fileSys.getPath(path))
+  def apply(path: String)(implicit fileSys: FileSystem = defaultFileSys): Path = fileSys.path(path)
 
 //  implicit def fromJPath(jpath: JPath): Path = apply(jpath)
 //  implicit def fromJFile(jfile: JFile): Path = apply(jfile)

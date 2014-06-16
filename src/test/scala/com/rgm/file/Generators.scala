@@ -11,7 +11,7 @@ import scala.math._
 object Generators {
   import Arbitrary.arbitrary
 
-  protected val legalChars = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') ++ List('_', '-', '+', '.', ' ')).toList
+  protected val legalChars = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') ++ List('_', '-', '+', '.', ' ')).toSeq
 
   def sampleWithReplacement(seq: Seq[Char], n: Int): Seq[Char] = {
     if (n == 0)
@@ -25,9 +25,9 @@ object Generators {
 
 //  val genLegalCharsString: Gen[String] = Gen.alphaStr
 
-  val genParentDirString: Gen[String] = ".."
+  val genParentDirString: Gen[String] = Gen.const("..")
 
-  val genCurrentDirString: Gen[String] = "."
+  val genCurrentDirString: Gen[String] = Gen.const(".")
 
   val genLegalString : Gen[String] = frequency((10, genParentDirString),
                                                (5, genCurrentDirString),

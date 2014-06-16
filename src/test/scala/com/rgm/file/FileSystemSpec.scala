@@ -5,7 +5,8 @@ import java.nio.file.{Path =>JPath, _}
 import org.scalatest.{FlatSpec, Suite, BeforeAndAfterEach}
 import scala.collection.mutable.ListBuffer
 import scala.util.{Try, Random}
-
+import java.net.URI
+import java.util
 
 
 class FileIOSpec extends FlatSpec with FileSetupTeardown {
@@ -195,6 +196,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
+<<<<<<< HEAD
 
   it should "20. copy then copy with replace" in {
     for(i <- filsGlobal.toList) {
@@ -224,6 +226,18 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     }
     flagGlobal = true
   }
+=======
+  it should "20. Handle zip files" in {
+    val zipFile = Paths.get("src/test/resources/dir.zip")
+    val uri = URI.create("jar:file:" + zipFile.toUri.getPath)
+    val env:  util.Map[String, String] = new util.HashMap[String, String]()
+    env.put("create", "true")
+    val zipSystem = FileSystem(FileSystems.newFileSystem(uri, env))
+    Path("foo")(zipSystem)
+
+  }
+
+>>>>>>> dbd17ba10ffabb93dc6a49f9f4041640e3b437ec
   //setFilePerm test-> sets posix file permissions
   //  it should "19. create a file, change posix permissions, ensure they were set correctly" in {
   //    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
