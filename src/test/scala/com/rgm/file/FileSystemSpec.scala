@@ -14,8 +14,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //copyTo test
   it should "1. copy file to target location correctly" in {
-    for(i <- filsGlobal.toList)
-    {
+    for(i <- filsGlobal.toList) {
       val tmp = Path(i)
       val trgt = Path(FileSystems.getDefault.getPath(targetGlobal + i.toString.split("/").last))
       try {
@@ -25,8 +24,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
         case nsfe: NoSuchFileException => assert(false)
       }
     }
-    for(x <- filsGlobal.toList)
-    {
+    for(x <- filsGlobal.toList) {
       val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
       assert(tmp.exists() && tmp.isFile() && (tmp.size().get == 0))
     }
@@ -35,8 +33,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //moveTo test
   it should "2. moveFile to target location correctly" in {
-    for(i <- filsGlobal.toList)
-    {
+    for(i <- filsGlobal.toList) {
       val tmp = new Path(i)
       try {
         tmp.moveFile(Path(targetGlobal + i.toString.split("/").last))
@@ -45,8 +42,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
         case nsfe: NoSuchFileException => assert(false)
       }
     }
-    for(x <- filsGlobal.toList)
-    {
+    for(x <- filsGlobal.toList) {
       val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
       val tmp2 = new Path(x)
       assert(tmp.exists() && tmp.isFile() && tmp2.nonExistent() && (tmp.size().get == 0))
@@ -56,8 +52,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //moveDirectory test
   it should "3. move directory to target location correctly" in {
-    for(i <- dirsGlobal.toList)
-    {
+    for(i <- dirsGlobal.toList) {
       val tmp = new Path(i)
       try {
         tmp.moveDirectory(Path(targetGlobal + i.toString.split("/").last))
@@ -66,10 +61,10 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
         case nsfe: NoSuchFileException => assert(false)
       }
     }
-    for(x <- dirsGlobal.toList)
-    {
+    for(x <- dirsGlobal.toList) {
       val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
-      assert(tmp.exists() && tmp.isDirectory())
+      val tmp2 = new Path(x)
+      assert(tmp.exists() && tmp.isDirectory() && tmp2.nonExistent())
     }
     flagGlobal = true
   }
@@ -200,6 +195,35 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
+
+  it should "20. copy then copy with replace" in {
+    for(i <- filsGlobal.toList) {
+      val tmp = new Path(i)
+      try {
+        tmp.copyTo(Path(targetGlobal + i.toString.split("/").last))
+      }
+      catch {
+        case nsfe: NoSuchFileException => assert(false)
+      }
+    }
+
+    for(i <- filsGlobal.toList) {
+      val tmp = new Path(i)
+      try {
+        tmp.copyTo(Path(targetGlobal + i.toString.split("/").last), StandardCopyOption.REPLACE_EXISTING)
+      }
+      catch {
+        case nsfe: NoSuchFileException => assert(false)
+      }
+    }
+
+    for(x <- filsGlobal.toList) {
+      val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
+      val tmp2 = new Path(x)
+      assert(tmp.exists() && tmp.isFile() && tmp2.exists() && (tmp.size().get == 0))
+    }
+    flagGlobal = true
+  }
   //setFilePerm test-> sets posix file permissions
   //  it should "19. create a file, change posix permissions, ensure they were set correctly" in {
   //    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
@@ -226,9 +250,9 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
 
   var flagGlobal: Boolean = false
   var testNo: Int = 1
-  var (srcGlobal: String, targetGlobal: String, dirsGlobal: ListBuffer[JPath] , filsGlobal: ListBuffer[JPath]) = ("","",new ListBuffer[JPath],new ListBuffer[JPath])
+  var (srcGlobal: String, targetGlobal: String, dirsGlobal: Array[JPath] , filsGlobal: Array[JPath]) = ("","",new Array[JPath](10),new Array[JPath](10))
 
-  def setup : (String, String, ListBuffer[JPath], ListBuffer[JPath]) =
+  def setup : (String, String, Array[JPath], Array[JPath]) =
   {
     val src = java.nio.file.Files.createTempDirectory("source_" + testNo + "_").toString + "/"
     val target =  java.nio.file.Files.createTempDirectory("target_" + testNo + "_").toString + "/"
@@ -246,18 +270,18 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
     val (dirs,fils) = createFS(p)
     (src, target, dirs, fils)
   }
-  def createFS(p: Path) : (ListBuffer[JPath],ListBuffer[JPath]) =
+  def createFS(p: Path) : (Array[JPath],Array[JPath]) =
   {
     val start = 1
     val end = 9
     val no = start + Random.nextInt(end - start + 1)
-    var fls = new ListBuffer[JPath]()
-    var dirs = new ListBuffer[JPath]()
-    for(x <- 1 to no)
+    var fls = new Array[JPath](no)
+    var dirs = new Array[JPath](no)
+    for(x <- 0 to no-1)
     {
       val tmp = p.createTempDir(x.toString + "_")
-      dirs += tmp.jpath
-      fls += tmp.createTempFile(x + "_", ".tmp").jpath
+      dirs(x) = tmp.jpath
+      fls(x) = tmp.createTempFile(x + "_", ".tmp").jpath
     }
     (dirs,fls)
   }
@@ -283,7 +307,6 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
       targetGlobal = target
       dirsGlobal = dirs
       filsGlobal = fils
-
     }
   }
 
