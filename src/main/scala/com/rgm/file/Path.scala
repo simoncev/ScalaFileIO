@@ -7,7 +7,8 @@ import java.nio.file.AccessMode._
 import scala.language.implicitConversions
 import scala.collection.JavaConverters._
 import java.nio.file.attribute._
-
+import java.util
+import scala.util
 
 
 object Path {
@@ -302,15 +303,18 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
         new SimpleFileVisitor[JPath]
         {
           //@throws(classOf[IOException])
-          override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult =
-          {
+          override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult = {
             Files.createDirectories(target.resolve(Path(jpath.relativize(dir))).jpath)
             FileVisitResult.CONTINUE
           }
 
-          override def visitFile(file: JPath,attrs: BasicFileAttributes) : FileVisitResult =
-          {
-            Files.copy(file, target.resolve(Path(jpath.relativize(file))).jpath)
+          override def visitFile(file: JPath,attrs: BasicFileAttributes) : FileVisitResult = {
+            Files.move(file, target.resolve(Path(jpath.relativize(file))).jpath)
+            FileVisitResult.CONTINUE
+          }
+
+          override def postVisitDirectory(dir: JPath, e: IOException) : FileVisitResult = {
+            Files.delete(dir)
             FileVisitResult.CONTINUE
           }
         })
