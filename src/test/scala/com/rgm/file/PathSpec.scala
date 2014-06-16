@@ -82,13 +82,13 @@ object SyntaxSpec extends Properties("Path")
     forAll { (p: Path, q: Path) => (p.parent == None || p.sibling(q).startsWith(p.parent.get)) }
 
   property("Siblings are both absolute/both relative (called with Path)") =
-    forAll {(p: Path, q: Path) => p.isAbsolute == p.sibling(q).isAbsolute }
+    forAll {(p: Path, q: Path) => if (p == p.root) true else p.isAbsolute == p.sibling(q).isAbsolute }
 
   property("Sibling has same parent (called with String)") =
     forAll {(p: Path, q: String) => (p.parent == None || p.sibling(q).startsWith(p.parent.get))}
 
   property("Siblings are both absolute/both relative (called with String)") =
-    Path("/foo/bar").isAbsolute == Path("/foo/bar").sibling(Path("foo")).isAbsolute
+    forAll { (p: Path, s: String) => if (p == p.root) true else p.isAbsolute == p.sibling(Path(s)).isAbsolute}
 
   // resolve, both string and path
   property("If path2 is absolute, length of resolved path is path1.segmentCount + path2.segmentCount - 1 (with path)") =
