@@ -1,13 +1,10 @@
 package com.rgm.file
 
 import org.scalacheck._
-import org.scalatest._
 
 import java.nio.file.{Path => JPath, _}
-import scala.collection.mutable._
 
 
-import scala.util._
 
 
 /**
