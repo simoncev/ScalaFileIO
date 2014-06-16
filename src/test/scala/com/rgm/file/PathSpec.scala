@@ -222,12 +222,24 @@ object SyntaxSpec extends Properties("Path")
 
   // endsWith, both string and path
 
+  property("All paths end with themselves") =
+    forAll{(p:Path) => p.endsWith(p)}
+
+
+  property("All paths end with themselves (with string)") =
+    forAll{(s:String) => Path(s).endsWith(s)}
+
+
   // startsWith, both string and path
 
   property("All absolute paths start with root") =
     forAll(genAbsolutePath){(p: Path) => p.startsWith(Path("/"))}
 
+  property("All paths start with themselves") =
+    forAll{(p:Path) => p.startsWith(p)}
 
+  property("All paths start with themselves (with string)") =
+    forAll{(s:String) => Path(s).startsWith(s)}
 
 }
 
