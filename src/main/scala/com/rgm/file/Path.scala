@@ -52,7 +52,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def path: String = toString
 
-  def name: String = if (path == "/") path else jpath.getFileName.toString
+  def name: String = if (path == fileSystem.separator) path else jpath.getFileName.toString
 
   //last most segment without extension
   def simpleName: String =
@@ -86,7 +86,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // just like segments
   def segmentIterator: Iterator[Path] =
     if (isAbsolute)
-      Iterator(fileSystem.path("/")) ++ jpath.iterator().asScala.map(Path(_))
+      Iterator(fileSystem.path(fileSystem.separator)) ++ jpath.iterator().asScala.map(Path(_))
     else
       jpath.iterator().asScala.map(Path(_))
 
@@ -100,7 +100,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //   Path("a").parent == Path("") or Path(".")
   //   Path("").parent == Path("..")
   //   Path("..").parent == Path("../..")
-  //   Path("/").parent == Path("/")
+  //   Path(fileSystem.separator).parent == Path(fileSystem.separator)
   // is this sensible, or does it present serious problems? it would certainly be convenient.
   // this breaks on ".." vs "../.." and "." and becomes inconsistent...
 
@@ -147,7 +147,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   // should behave like JPath.resolve except when `other` is an absolute path, in which case in should behave as if
   // `other` were actually a relative path (i.e. `other.relativeTo(other.root.get)`)
-  // this is so that `path1 / path2` behaves exactly like `Path(path1.path + "/" + path2.path)`
+  // this is so that `path1 / path2` behaves exactly like `Path(path1.path + fileSystem.separator + path2.path)`
   def resolve(other: Path): Path =
   {
     if (other.isAbsolute)
@@ -173,7 +173,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       Path(jpath.resolveSibling(other.jpath))
 
 //    val sibl : Path = if (other.isAbsolute) Path(other.path.substring(1)) else other
-//    if (this == (Path("/")))
+//    if (this == (Path(fileSystem.separator)))
 //      Path(fileSystem.path("/.").jpath.resolveSibling(sibl.path))
 //    else
 //      Path(jpath.resolveSibling(sibl.path))
