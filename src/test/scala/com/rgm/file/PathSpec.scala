@@ -372,7 +372,8 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     for(x <- dirsGlobal.toList)
     {
       val tmp = new Path(FileSystems.getDefault.getPath(targetGlobal + x.toString.split("/").last))
-      assert(!tmp.exists() && tmp.isDirectory())
+      val tmp2 = new Path(x)
+      assert(tmp.exists() && tmp.isDirectory() && tmp2.nonExistent())
     }
     flagGlobal = true
   }
