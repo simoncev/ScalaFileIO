@@ -2,7 +2,7 @@ package com.rgm.file
 
 import java.io.{File => JFile, IOException}
 import java.net.{URI, URL}
-import java.nio.file.{Path => JPath, _}
+import java.nio.file.{Path => JPath, FileSystem => JFileSystem, _}
 import java.nio.file.AccessMode._
 import scala.language.implicitConversions
 import scala.collection.JavaConverters._
@@ -14,16 +14,17 @@ object Path {
   def apply(jpath: JPath): Path = new Path(jpath)
   def apply(jfile: JFile): Path = new Path(jfile.toPath)
 
+  implicit val defaultFileSys: JFileSystem = FileSystems.getDefault
   // it might be better if these methods took an implicit FileSystem rather than relying on java.nio.file..Paths
   // (which assumes the default FileSystem)
   def apply(uri: URI): Path = new Path(Paths.get(uri))
-  def apply(path: String): Path = new Path(Paths.get(path))
+  def apply(path: String)(implicit fileSys: JFileSystem = defaultFileSys): Path = new Path(fileSys.getPath(path))
 
 //  implicit def fromJPath(jpath: JPath): Path = apply(jpath)
 //  implicit def fromJFile(jfile: JFile): Path = apply(jfile)
 //  implicit def fromString(path: String): Path = apply(path)
 
-  implicit def toFinder(path: Path): PathFinder = ???
+//  implicit def toFinder(path: Path): PathFinder = ???
 
 
 }
@@ -166,15 +167,19 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // (for consistency with resolve). the NIO implementation also seems dubious when `this` is the root or when `this`
   // has no parent and `other` is on a different file system
   def sibling(other: Path): Path = {
-    val sibl : Path = if (other.isAbsolute) Path(other.path.substring(1)) else other
-    if (this == (Path("/")))
-      Path(fileSystem.path("/.").jpath.resolveSibling(sibl.path))
+    if (other.isAbsolute)
+      Path(jpath.resolveSibling(other.relativeTo(other.root.get).jpath))
     else
-      Path(jpath.resolveSibling(sibl.path))
+      Path(jpath.resolveSibling(other.jpath))
+
+//    val sibl : Path = if (other.isAbsolute) Path(other.path.substring(1)) else other
+//    if (this == (Path("/")))
+//      Path(fileSystem.path("/.").jpath.resolveSibling(sibl.path))
+//    else
+//      Path(jpath.resolveSibling(sibl.path))
   }
 
   def sibling(other: String): Path = sibling(fileSystem.path(other))
-
 
   //--------------------------------------------------------------------------------------------------------------------
 
