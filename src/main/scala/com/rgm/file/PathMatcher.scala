@@ -1,14 +1,14 @@
 package com.rgm.file
 
-import java.nio.file.{PathMatcher => JPathMatcher}
+import java.nio.file.{PathMatcher => JPathMatcher, FileSystems}
 import scala.language.implicitConversions
 import scala.util.matching.Regex
 
 object PathMatcher {
-  implicit def globMatcher(s: String): PathMatcher = ???
-  implicit def regexMatcher(r: Regex): PathMatcher = ???
+  implicit def globMatcher(s: String): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("glob:" + s))
+  implicit def regexMatcher(r: Regex): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("regex:" + r))
   
-  implicit def fromJava(matcher: JPathMatcher) = ???
+  implicit def fromJava(matcher: JPathMatcher) = new FunctionPathMatcher((p: Path) => matcher.matches(p.jpath))
 
   def apply(matcher: Path => Boolean): PathMatcher = new FunctionPathMatcher(matcher)
 }
@@ -20,13 +20,13 @@ trait PathMatcher {
  	def || (that: PathMatcher): PathMatcher = PathMatcher(p => this.matches(p) || that.matches(p))
  
   /** Returns a matcher that accepts a `Path` if it matches either `this` matcher and `that` matcher. */
- 	def && (matcher: PathMatcher): PathMatcher = ???
+ 	def && (that: PathMatcher): PathMatcher = PathMatcher(p => this.matches(p) && that.matches(p))
  
   /** Returns a matcher that accepts a `Path` if it matches either `this` matcher but not `that` matcher. */
- 	def -- (matcher: PathMatcher): PathMatcher = ???
+ 	def -- (that: PathMatcher): PathMatcher = PathMatcher(p => this.matches(p) && !that.matches(p))
  
  	/** Returns a matcher that accepts a `Path` if it does not match `this` matcher. */
- 	def unary_! : PathMatcher = ???
+ 	def unary_! : PathMatcher = PathMatcher(!this.matches(_))
 }
 
 class FunctionPathMatcher(matcher: Path => Boolean) extends PathMatcher {
