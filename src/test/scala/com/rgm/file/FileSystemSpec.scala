@@ -196,8 +196,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
-<<<<<<< HEAD
-
   it should "20. copy then copy with replace" in {
     for(i <- filsGlobal.toList) {
       val tmp = new Path(i)
@@ -226,18 +224,31 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     }
     flagGlobal = true
   }
-=======
-  it should "20. Handle zip files" in {
-    val zipFile = Paths.get("src/test/resources/dir.zip")
+
+  it should "21. Handle zip files" in {
+    val zipFile = Paths.get("src/test/resources/dir1.zip")
+    Path(zipFile).deleteIfExists()
     val uri = URI.create("jar:file:" + zipFile.toUri.getPath)
     val env:  util.Map[String, String] = new util.HashMap[String, String]()
     env.put("create", "true")
     val zipSystem = FileSystem(FileSystems.newFileSystem(uri, env))
-    Path("foo")(zipSystem)
+    val p = Path("/")(zipSystem)
 
+    //test create and copy files zip-> unix
+    val pth = p.createTempFile("test",".tmp")
+    Path("src/test/resources/tmpCopy").deleteIfExists()
+    pth.moveFile(Path("src/test/resources/tmpCopy"))
+    assert(pth.nonExistent() && Path("src/test/resources/tmpCopy").exists())
+
+    //test create /tmpDir/file.tmp -> move to unix fileSystem
+    val d = p.createTempDir("tmpDir")
+    println("temp dir in->" + d.path)
+    d.exists()
+    val dst = Path("/tmpDir")(zipSystem)
+    d.moveDirectory(dst)
+    assert(dst.exists())
   }
 
->>>>>>> dbd17ba10ffabb93dc6a49f9f4041640e3b437ec
   //setFilePerm test-> sets posix file permissions
   //  it should "19. create a file, change posix permissions, ensure they were set correctly" in {
   //    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
