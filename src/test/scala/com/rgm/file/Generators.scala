@@ -40,10 +40,10 @@ object Generators {
 
   val genAbsolutePathString: Gen[String] = genRelativePathString.map(str => "/".concat(str.mkString("/")))
 
-  val genPathStrings: Gen[String] = frequency((50, genRelativePathString),
+  val genPathString: Gen[String] = frequency((50, genRelativePathString),
                                               (50, genAbsolutePathString))
 
-  val genPathStringWithExtension: Gen[String] = genPathStrings.map(str => str + "." + genLegalCharsString.sample.get)
+  val genPathStringWithExtension: Gen[String] = genPathString.map(str => str + "." + genLegalCharsString.sample.get)
 
   //use path names to build Paths
   val genRelativePath: Gen[Path] = genRelativePathString.map(str => Path(str))
@@ -56,7 +56,7 @@ object Generators {
 
   implicit val arbPath: Arbitrary[Path] = Arbitrary(genPath)
 
-  implicit val arbString: Arbitrary[String] = Arbitrary(genPathStrings)
+  implicit val arbString: Arbitrary[String] = Arbitrary(genPathString)
 
 
 

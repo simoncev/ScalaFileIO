@@ -201,16 +201,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
-  it should "20. Handle zip files" in {
-    val zipFile = Paths.get("src/test/resources/dir.zip")
-    val uri = URI.create("jar:file:" + zipFile.toUri.getPath)
-    val env:  util.Map[String, String] = new util.HashMap[String, String]()
-    env.put("create", "true")
-    val zipSystem = FileSystem(FileSystems.newFileSystem(uri, env))
-    Path("foo")(zipSystem)
-
-  }
-
   //setFilePerm test-> sets posix file permissions
   //  it should "19. create a file, change posix permissions, ensure they were set correctly" in {
   //    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")

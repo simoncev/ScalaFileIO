@@ -3,8 +3,9 @@ package com.rgm.file
 import org.scalacheck._
 
 import java.nio.file.{Path => JPath, _}
-
-
+import java.net.URI
+import java.util
+import scala.util.{Failure, Success, Try}
 
 
 /**
@@ -15,6 +16,11 @@ object SyntaxSpec extends Properties("Path")
   import Prop._
   import Generators._
 
+  val zipFile = Paths.get("src/test/resources/dir1.zip")
+  val uri = URI.create("jar:file:" + zipFile.toUri.getPath)
+  val env:  util.Map[String, String] = new util.HashMap[String, String]()
+  env.put("create", "true")
+  val zipSystem = FileSystem(FileSystems.newFileSystem(uri, env))
 
   //properties for path function
   property("path agrees with jpath") =
@@ -96,11 +102,18 @@ object SyntaxSpec extends Properties("Path")
         else
           path1.resolve(path2).segmentCount == path1.segmentCount + path2.segmentCount - 1
     }
+
   property("Resolved path is absolute iff path1 is absolute (with path)") =
     forAll {(p: Path, q: Path) => p.isAbsolute == p.resolve(q).isAbsolute }
 
   property("Resolved path's name is prefixed path1's name (with path)") =
     forAll {(p: Path, q: Path) => if (!p.equals(Path(""))) p.resolve(q).startsWith(p) else true }
+
+  property("Resolved paths must be of same file system") =
+    forAll{(s: String, p: Path) => Try(p.resolve(Path(s)(zipSystem))) match {
+      case Success(v) => false
+      case Failure(e) => true
+    } }
 
   property("If path2 is absolute, length of resolved path is path1.segmentCount + path2.segmentCount - 1 (with string)") =
     forAll(genPath, genAbsolutePathString) {
