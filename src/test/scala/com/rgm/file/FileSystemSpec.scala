@@ -237,8 +237,8 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     //test create and copy files zip-> unix
     val pth = p.createTempFile("test",".tmp")
     Path("src/test/resources/tmpCopy").deleteIfExists()
-    pth.moveFile(Path("src/test/resources/tmpCopy"))
-    assert(pth.nonExistent() && Path("src/test/resources/tmpCopy").exists())
+    pth.copyTo(Path("src/test/resources/tmpCopy"))
+    assert(pth.exists() && Path("src/test/resources/tmpCopy").exists())
 
     //test create /tmpDir/file.tmp -> move to unix fileSystem
     val d = p.createTempDir("tmpDir")
@@ -247,6 +247,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     val dst = Path("/tmpDir")(zipSystem)
     d.moveDirectory(dst)
     assert(dst.exists())
+    zipSystem.close
     flagGlobal = true
   }
 
