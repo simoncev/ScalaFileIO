@@ -1,6 +1,6 @@
 package com.rgm.file
 
-import java.nio.file.{PathMatcher => JPathMatcher}
+import java.nio.file.{PathMatcher => JPathMatcher, Path => JPath}
 import scala.language.implicitConversions
 import scala.util.matching.Regex
 
@@ -8,7 +8,7 @@ object PathMatcher {
   implicit def globMatcher(s: String): PathMatcher = ???
   implicit def regexMatcher(r: Regex): PathMatcher = ???
   
-  implicit def fromJava(matcher: JPathMatcher) = ???
+  implicit def fromJava(matcher: JPathMatcher) = new FunctionPathMatcher((p: Path) => matcher.matches(p.jpath))
 
   def apply(matcher: Path => Boolean): PathMatcher = new FunctionPathMatcher(matcher)
 }

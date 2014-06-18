@@ -12,6 +12,7 @@ import java.nio.file.spi.FileSystemProvider
 object FileSystem {
   def apply(jsystem: JFileSystem): FileSystem = new FileSystem(jsystem)
 
+  //add implicit default
 }
 
 class FileSystem(jsystem : JFileSystem) {
