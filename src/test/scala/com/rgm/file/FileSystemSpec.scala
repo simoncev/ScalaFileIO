@@ -247,6 +247,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     val dst = Path("/tmpDir")(zipSystem)
     d.moveDirectory(dst)
     assert(dst.exists())
+    flagGlobal = true
   }
 
   //setFilePerm test-> sets posix file permissions
