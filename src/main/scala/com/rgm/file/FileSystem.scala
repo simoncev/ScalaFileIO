@@ -23,7 +23,7 @@ class FileSystem(jsystem : JFileSystem) {
 
   def path (segments : String *) : Path = Path(jsystem.getPath(segments.head, segments.tail : _*))
 
-  def pathFinder (syntaxAndPattern : String ): PathFinder = ???
+  def pathMatcher (syntaxAndPattern : String ): PathMatcher = jsystem.getPathMatcher(syntaxAndPattern)
 
   def separator : String = jsystem.getSeparator
 
