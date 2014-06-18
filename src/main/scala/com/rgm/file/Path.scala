@@ -249,33 +249,29 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def delete() : Unit = Files.delete(jpath)
 
   //deleteRecursively
-  def deleteRecursively(): Boolean =
-  {
+  def deleteRecursively(): Boolean = {
     //first check if it's a dir or file
-    if(exists && isDirectory)
-    {
+    if(exists && isDirectory) {
       Files.walkFileTree(jpath,
-        new SimpleFileVisitor[JPath]
-        {
+        new SimpleFileVisitor[JPath] {
           //@throws(classOf[IOException])
-          override def postVisitDirectory(dir: JPath, e: IOException) : FileVisitResult =
-          {
+          override def postVisitDirectory(dir: JPath, e: IOException) : FileVisitResult = {
             if(e != null)
               throw e
-            else
-            {
+            else {
               Files.delete(dir)
               FileVisitResult.CONTINUE
             }
           }
 
-          override def visitFile(file: JPath,attrs: BasicFileAttributes ) : FileVisitResult = {Files.delete(file);FileVisitResult.CONTINUE }
+          override def visitFile(file: JPath,attrs: BasicFileAttributes ) : FileVisitResult = {
+            Files.delete(file);FileVisitResult.CONTINUE
+          }
         }
       )
       true
     }
-    else if(exists())
-    {
+    else if(exists()) {
       try {
         delete()
         true
@@ -320,4 +316,5 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
         })
     }
   }
+
 }
