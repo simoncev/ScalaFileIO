@@ -15,14 +15,14 @@ import java.io.{File => JFile, IOException}
 //  def foreach[U](f: Path => U)
 //}
 
- class PathSet[Path](root: Path, matcher: PathMatcher, maxDepth: Int, options: LinkOption) extends Traversable[Path] {
+ class PathSet[Path](root: Path, matcher: PathMatcher, maxDepth: Int, options: LinkOption*) extends Traversable[Path] {
   def foreach[U](f: (Path => U)) = {
-    PathSet(Path(root.toString), matcher, maxDepth, options)
+    PathSet(Path(root.toString), matcher, maxDepth, options:_*)
   }
 }
 object PathSet {
 
-  def apply(root: Path, matcher: PathMatcher, maxDepth: Int, options: LinkOption): Traversable[Path] = {
+  def apply(root: Path, matcher: PathMatcher, maxDepth: Int, options: LinkOption*): Traversable[Path] = {
     val l: ListBuffer[Path] = new ListBuffer[Path]
     var d: Int = maxDepth
     if(root.exists()) {
