@@ -17,5 +17,14 @@ object PathMatcherSpec extends Properties("PathMatcher") {
   property("Implicit conversion from string to glob") =
     forAll{(p: Path) => p.isAbsolute || ("*".matches(p) == (p.segmentCount == 1))}
 
+  property("Can use glob to find files with extensions") =
+    forAll(genLegalString){(s: String) => s == ".." || "*?.*".matches(Path(s)) == (Path(s).extension != None)}
 
+  property("Can use regex to capture files of a given depth") =
+    forAll(Gen.chooseNum(1,8), genPath) {(i: Int, p: Path) =>
+      if (p.isAbsolute)
+        if (i < 2) true else!(("/" + ("[^/]*/" * (i - 2)) + "[^/]+").r.matches(p) ^ p.segmentCount == i)
+      else
+        !((("[^/]*/" * (i - 1)) + "[^/]*").r.matches(p) ^ p.segmentCount == i)
+    }
 }

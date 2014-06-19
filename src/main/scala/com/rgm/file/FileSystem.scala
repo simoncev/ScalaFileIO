@@ -4,13 +4,15 @@ package com.rgm.file
  * Created by thausler on 6/6/14.
  */
 
-import java.nio.file.{FileSystem => JFileSystem, WatchService, FileStore}
+import java.nio.file.{FileSystem => JFileSystem, FileSystems, WatchService, FileStore}
 import scala.collection.JavaConverters._
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 
 object FileSystem {
   def apply(jsystem: JFileSystem): FileSystem = new FileSystem(jsystem)
+
+  def default: FileSystem = FileSystem(FileSystems.getDefault)
 
   //add implicit default
 }
@@ -23,7 +25,7 @@ class FileSystem(jsystem : JFileSystem) {
 
   def path (segments : String *) : Path = Path(jsystem.getPath(segments.head, segments.tail : _*))
 
-  def pathMatcher (syntaxAndPattern : String ): PathMatcher = jsystem.getPathMatcher(syntaxAndPattern)
+  def pathMatcher (syntaxAndPattern : String ): PathMatcher = PathMatcher.fromJava(jsystem.getPathMatcher(syntaxAndPattern))
 
   def separator : String = jsystem.getSeparator
 
