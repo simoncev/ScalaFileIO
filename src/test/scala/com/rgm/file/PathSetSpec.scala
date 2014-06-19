@@ -1,7 +1,7 @@
 package com.rgm.file
 
 
-import java.nio.file.{Path =>JPath, FileS_}
+import java.nio.file.{Path =>JPath, _}
 import org.scalatest.{FlatSpec, Suite, BeforeAndAfterEach}
 import scala.collection.mutable.ListBuffer
 import scala.util.{Try, Random}
@@ -23,6 +23,8 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "1. PathSet should find the current state of the file system" in {
     FileSystem.default.pathMatcher("glob:*.tmp")
     Path(srcGlobal).createTempFile("foo", "tmp")
+    Path(srcGlobal).createTempFile("bar", "tmp")
+    Path(srcGlobal).createTempFile("baz", "scala")
 
   }
 
