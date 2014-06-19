@@ -5,12 +5,14 @@ import scala.language.implicitConversions
 import scala.util.matching.Regex
 
 object PathMatcher {
-  implicit def globMatcher(s: String): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("glob:" + s))
-  implicit def regexMatcher(r: Regex): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("regex:" + r))
+  implicit def globMatcher(s: String): PathMatcher = apply(s)
+  implicit def regexMatcher(r: Regex): PathMatcher = apply(r)
   
   implicit def fromJava(matcher: JPathMatcher) = new FunctionPathMatcher((p: Path) => matcher.matches(p.jpath))
 
   def apply(matcher: Path => Boolean): PathMatcher = new FunctionPathMatcher(matcher)
+  def apply(s: String): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("glob:" + s))
+  def apply(r: Regex): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("regex:" + r))
 }
 
 trait PathMatcher {
