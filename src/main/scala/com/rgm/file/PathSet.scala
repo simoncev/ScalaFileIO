@@ -25,7 +25,6 @@ import com.rgm.file.Path
 
           override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult = {
             if(d <= 0) {
-              d = maxDepth
               return FileVisitResult.SKIP_SUBTREE
             }
             else {
@@ -39,7 +38,12 @@ import com.rgm.file.Path
 
           override def visitFile(file: JPath,attrs: BasicFileAttributes ) : FileVisitResult = {
             if(matcher.matches(Path(file)))
-              f(Path(file))//l += Path(file)
+              f(com.rgm.file.Path(file))
+            FileVisitResult.CONTINUE
+          }
+
+          override def postVisitDirectory(dir: JPath, e: IOException) : FileVisitResult = {
+            d+=1
             FileVisitResult.CONTINUE
           }
         })

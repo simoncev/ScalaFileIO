@@ -47,4 +47,29 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
 
   }
 
+  it should "2. test should search only till given maxDepth" in {
+    //building testing tree
+    val src = Path(srcGlobal)
+    val dir1 = src.createTempDir("dir1_")
+    val dir2 = src.createTempDir("dir2_")
+    val dir3 = dir1.createTempDir("dir3_")
+    val dir4 = dir2.createTempDir("dir4_")
+
+    dir1.createTempFile("file_1_",".tmp")
+    dir1.createTempFile("file_2_",".tmp")
+    dir3.createTempFile("file_3_",".tmp")
+    dir4.createTempFile("file_4_", ".tmp")
+    src.createTempFile("file_5_",".tmp")
+
+    val matcher = PathMatcher(""".*\.tmp""".r)
+    //val pathSet = PathSet(Path(srcGlobal), matcher, 3)
+    var numTmps = 0
+    PathSet(Path(srcGlobal), matcher, 2).foreach((p:Path) => numTmps+=1)
+    assert(numTmps==3)
+    numTmps = 0
+    PathSet(Path(srcGlobal), matcher, 3).foreach((p:Path) => numTmps+=1)
+    assert(numTmps==5)
+  }
+  
+
 }
