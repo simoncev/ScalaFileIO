@@ -15,9 +15,9 @@ import com.rgm.file.Path
 //  def foreach[U](f: Path => U)
 //}
 
- class PathSet (root: com.rgm.file.Path, matcher: PathMatcher, maxDepth: Int, options: LinkOption*) extends Traversable[Path] {
+ class PathSet (root: Path, matcher: PathMatcher, maxDepth: Int, options: LinkOption*) extends Traversable[Path] {
 
-  override def foreach[U](f: (com.rgm.file.Path => U)): Unit = {
+  override def foreach[U](f: (Path => U)): Unit = {
     var d: Int = maxDepth
     if(root.exists()) {
       Files.walkFileTree(root.jpath,
@@ -30,7 +30,7 @@ import com.rgm.file.Path
             }
             else {
               if(matcher.matches(Path(dir))) {
-                f(com.rgm.file.Path(dir))
+                f(Path(dir))
               }
               d-=1
               FileVisitResult.CONTINUE
@@ -39,7 +39,7 @@ import com.rgm.file.Path
 
           override def visitFile(file: JPath,attrs: BasicFileAttributes ) : FileVisitResult = {
             if(matcher.matches(Path(file)))
-              f(com.rgm.file.Path(file))//l += Path(file)
+              f(Path(file))//l += Path(file)
             FileVisitResult.CONTINUE
           }
         })

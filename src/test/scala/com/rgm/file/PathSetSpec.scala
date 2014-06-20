@@ -1,6 +1,5 @@
 package com.rgm.file
 
-
 import java.nio.file.{Path =>JPath, _}
 import org.scalatest.{FlatSpec, Suite, BeforeAndAfterEach}
 import scala.collection.mutable.ListBuffer
@@ -27,13 +26,24 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     Path(srcGlobal).createTempFile("bar", ".tmp")
     Path(srcGlobal).createTempFile("baz", ".scala")
     var numTmps = 0
-    pathSet.foreach((p:Path) => {numTmps+=1; println("LOOK MA, I FOUND A: " + p.path)})
+    pathSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 4)
     foo.delete()
     numTmps = 0
     pathSet.foreach(p => numTmps += 1)
 
     assert(numTmps == 3)
+  }
+
+  it should "3. PathSet should apply its filter to the elements it finds" in {
+    val matcher = PathMatcher("*.tmp")
+    val pathSet = PathSet(Path(srcGlobal), matcher, 3)
+    val foo = Path(srcGlobal).createTempFile("foo", ".tmp")
+    Path(srcGlobal).createTempFile("bar", ".tmp")
+    Path(srcGlobal).createTempFile("baz", ".scala")
+    var numTmps = 0
+    pathSet.foreach((p:Path) => numTmps+=1)
+    assert(numTmps == 2)
 
   }
 
