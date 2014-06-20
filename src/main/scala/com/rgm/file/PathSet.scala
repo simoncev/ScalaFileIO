@@ -61,23 +61,32 @@ object PathSet {
   }
 }
 
-abstract class PathSet extends PathFinder {
+abstract class PathSet extends Traversable[Path] {
 
 }
 
 class SimplePathSet(root: Path) extends PathSet {
   private var memberPath: Path = root
 
-  override def foreach[U](f: Path => U) {
+  override def foreach[U](f: Path => U) = {
     f(memberPath)
   }
 }
 
 final class FilteredPathSet(p: Path, depth: Int, m: PathMatcher) extends PathSet {
   private var memberPathSet: PathSet
+
+  override def foreach[U](f: Path => U) = {
+    //TODO
+  }
 }
 
 final class CompoundPathSet(pathSet1: PathSet, pathSet2: PathSet) extends PathSet {
 
+
+  override def foreach[U](f: Path => U) = {
+    pathSet1.foreach(f)
+    pathSet2.foreach(f)
+  }
 }
 
