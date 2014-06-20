@@ -28,12 +28,12 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     Path(srcGlobal).createTempFile("baz", ".scala")
     var numTmps = 0
     pathSet.foreach((p:Path) => {numTmps+=1; println("LOOK MA, I FOUND A: " + p.path)})
-    assert(numTmps == 3)
+    assert(numTmps == 4)
     foo.delete()
     numTmps = 0
     pathSet.foreach(p => numTmps += 1)
 
-    assert(numTmps == 2)
+    assert(numTmps == 3)
 
   }
 
