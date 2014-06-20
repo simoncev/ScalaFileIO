@@ -5,7 +5,6 @@ import java.nio.file.{Path => JPath, FileSystem => JFileSystem, _}
 import scala.collection.mutable.ListBuffer
 import java.nio.file.attribute._
 import java.io.{File => JFile, IOException}
-import com.rgm.file.Path
 
 /**
  * Created by sshivaprasad on 6/18/14.
@@ -50,6 +49,7 @@ import com.rgm.file.Path
     }
   }
 }
+
 object PathSet {
 
   def apply(root: Path, matcher: PathMatcher, maxDepth: Int, options: LinkOption*): PathSet =
