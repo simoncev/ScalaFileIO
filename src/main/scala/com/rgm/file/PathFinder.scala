@@ -1,6 +1,6 @@
 package com.rgm.file
 
-trait PathFinder {
+trait PathFinder extends Traversable[Path] {
   def +++(includes: PathFinder): PathFinder
 
   def ---(excludes: PathFinder): PathFinder
