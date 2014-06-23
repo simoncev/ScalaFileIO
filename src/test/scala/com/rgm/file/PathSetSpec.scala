@@ -90,4 +90,27 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     assert(numFound == 0)
     flagGlobal = true
   }
+
+  it should "6. Apply filters built of globs to the elements it finds" in {
+    val matcher = PathMatcher(srcGlobal + "*.tmp")
+    val pathSet = PathSet(Path(srcGlobal)) * matcher
+    Path(srcGlobal).createTempFile("foo", ".tmp")
+    Path(srcGlobal).createTempFile("bar", ".tmp")
+    Path(srcGlobal).createTempFile("baz", ".scala")
+    val dir1 = Path(srcGlobal).createTempDir("dir1")
+    dir1.createTempFile("foo", ".tmp")
+    dir1.createTempFile("bar", ".tmp")
+    dir1.createTempFile("baz", ".scala")
+    var numTmps = 0
+    pathSet.foreach((p:Path) => numTmps+=1)
+    assert(numTmps == 2)
+
+    numTmps = 0
+    val pathSetAllDepths = PathSet(Path(srcGlobal)) ** matcher
+    pathSetAllDepths.foreach((p:Path) => numTmps+=1)
+    assert(numTmps == 2)
+
+    flagGlobal = true
+
+  }
 }
