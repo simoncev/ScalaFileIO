@@ -62,7 +62,19 @@ object PathSet {
 }
 
 abstract class PathSet extends Traversable[Path] {
+  def +++(includes: PathSet): PathSet = ???
 
+  def ---(excludes: PathSet): PathSet = ???
+
+  def *(matcher: PathMatcher): PathSet = ???
+
+  def **(matcher: PathMatcher): PathSet = ???
+
+  def *** : PathSet = ???
+
+  def /(literal: String): PathSet = ???
+
+//  def get: Iterable[Path] = ???
 }
 
 class SimplePathSet(root: Path) extends PathSet {
@@ -73,11 +85,11 @@ class SimplePathSet(root: Path) extends PathSet {
   }
 }
 
-final class FilteredPathSet(p: Path, depth: Int, m: PathMatcher) extends PathSet {
-  private var memberPathSet: PathSet
+final class FilteredPathSet(p: PathSet, depth: Int, m: PathMatcher) extends PathSet {
+  private var memberPathSet: PathSet = p
 
   override def foreach[U](f: Path => U) = {
-    //TODO
+
   }
 }
 
