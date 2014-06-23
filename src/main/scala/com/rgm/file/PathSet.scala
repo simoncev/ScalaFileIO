@@ -5,7 +5,7 @@ import java.nio.file.{Path => JPath, FileSystem => JFileSystem, _}
 import scala.collection.mutable.ListBuffer
 import java.nio.file.attribute._
 import java.io.{File => JFile, IOException}
-
+import collection.mutable.HashMap
 /**
  * Created by sshivaprasad on 6/18/14.
  */
@@ -64,12 +64,16 @@ object PathSet {
 abstract class PathSet extends Traversable[Path] {
   def +++(includes: PathSet): PathSet = new CompoundPathSet(this, includes)
 
-//  def ---(excludes: PathSet): PathSet = {
-//    for(i <- this)
-//    {
-//      excludes.
-//    }
-//  }
+
+  def ---(excludes: PathSet): PathSet = {
+    var result = this.toList
+    for(i <- excludes)
+      result = result diff List(i)
+    var r: PathSet = new SimplePathSet(result.head)
+    for (p <- result.tail)
+      r = new CompoundPathSet(r, new SimplePathSet(p))//replace with +++?
+    r
+  }
 
   def *(matcher: PathMatcher): PathSet = new FilteredPathSet(this, 1, matcher)
 
@@ -77,9 +81,7 @@ abstract class PathSet extends Traversable[Path] {
 
   def *** : PathSet = this ** (PathMatcher(""".*""".r), Int.MaxValue)
 
-  def /(literal: String): PathSet = ???
-
-//  def get: Iterable[Path] = ???
+  def /(literal: String): PathSet = this ** (PathMatcher(literal),1)
 }
 
 class SimplePathSet(root: Path) extends PathSet {
