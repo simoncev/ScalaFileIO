@@ -40,7 +40,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     Path(srcGlobal).createTempFile("baz", ".scala")
     var numTmps = 0
     pathSet.foreach((p:Path) => numTmps+=1)
-    assert(numTmps == 4)
+    assert(numTmps == 3)
     foo.delete()
     numTmps = 0
     pathSet.foreach(p => numTmps += 1)
@@ -72,6 +72,12 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     (PathSet(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => numTmps+=1)
     //assert(numTmps==4)
     assert(true)
+    (PathSet(Path(srcGlobal)) * allMatcher).foreach((p:Path) => {numTmps+=1; println("Found: " + p)})
+    assert(numTmps==2)
+    numTmps = 0
+    println("\n\n")//REMOVE
+    (PathSet(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => {numTmps+=1; println("Found: " + p)})//REMOVE the println
+    assert(numTmps==4)
     flagGlobal = true
   }
 
@@ -95,4 +101,11 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
+  it should "5. Does not match root on calls to children" in {
+    val pathSet = PathSet(Path(srcGlobal).createTempDir("file_1_")) * allMatcher
+    var numFound = 0
+    pathSet.foreach((p: Path) => numFound += 1)
+    assert(numFound == 0)
+    flagGlobal = true
+  }
 }

@@ -77,6 +77,8 @@ abstract class PathSet extends Traversable[Path] {
 
   def *(matcher: PathMatcher): PathSet = new FilteredPathSet(this, 1, matcher)
 
+  def **(matcher: PathMatcher): PathSet = new FilteredPathSet(this, 1, matcher)
+
   def **(matcher: PathMatcher, d: Int): PathSet = new FilteredPathSet(this, d, matcher)
 
   def *** : PathSet = this ** (PathMatcher(""".*""".r), Int.MaxValue)
@@ -101,12 +103,19 @@ final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMat
         Files.walkFileTree(root.jpath,
           new SimpleFileVisitor[JPath] {
             override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes): FileVisitResult = {
-              if (d <= 0) {
+              //println("Matching directory " + dir + " under root " + root.jpath)//REMOVE
+              if (d < 0) {
+                return FileVisitResult.SKIP_SUBTREE
+              }
+              else if(d == 0) {
+                if (matcher.matches(Path(dir)) && !(root == Path(dir))) {
+                  f(Path(dir))
+                }
                 return FileVisitResult.SKIP_SUBTREE
               }
               else {
-                if (matcher.matches(Path(dir))) {
-                  f(com.rgm.file.Path(dir))
+                if (matcher.matches(Path(dir)) && !(root == Path(dir))) {
+                  f(Path(dir))
                 }
                 d -= 1
                 FileVisitResult.CONTINUE
@@ -114,9 +123,9 @@ final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMat
             }
 
             override def visitFile(file: JPath, attrs: BasicFileAttributes): FileVisitResult = {
-              println("Matching file " + file + " under root " + root.jpath)
+              //println("Matching file " + file + " under root " + root.jpath)//REMOVE
               if (matcher.matches(Path(file)))
-                f(com.rgm.file.Path(file))
+                f(Path(file))
               FileVisitResult.CONTINUE
             }
 
