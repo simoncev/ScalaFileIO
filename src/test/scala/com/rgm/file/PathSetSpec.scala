@@ -56,7 +56,8 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     (PathSet(Path(srcGlobal)) * allMatcher).foreach((p:Path) => numTmps+=1)
     assert(numTmps==2)
     numTmps = 0
-    (PathSet(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => numTmps+=1)
+    println("\n\n")
+    (PathSet(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => {numTmps+=1; println("Found: " + p)})
     assert(numTmps==4)
   }
 

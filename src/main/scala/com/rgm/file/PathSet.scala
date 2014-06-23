@@ -90,12 +90,11 @@ class SimplePathSet(root: Path) extends PathSet {
   }
 }
 
-final class FilteredPathSet(p: PathSet, depth: Int, matcher: PathMatcher) extends PathSet {
-  private var memberPathSet: PathSet = p
+final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMatcher) extends PathSet {
 
   override def foreach[U](f: Path => U) = {
     var d: Int = depth
-    for (root <- p) {
+    for (root <- memberPathSet) {
       if (root.exists()) {
         Files.walkFileTree(root.jpath,
           new SimpleFileVisitor[JPath] {
@@ -113,6 +112,7 @@ final class FilteredPathSet(p: PathSet, depth: Int, matcher: PathMatcher) extend
             }
 
             override def visitFile(file: JPath, attrs: BasicFileAttributes): FileVisitResult = {
+              println("Matching file " + file + " under root " + root.jpath)
               if (matcher.matches(Path(file)))
                 f(com.rgm.file.Path(file))
               FileVisitResult.CONTINUE
