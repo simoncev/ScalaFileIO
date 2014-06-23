@@ -12,6 +12,8 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
 
   behavior of "PathSet"
 
+  val allMatcher = PathMatcher(""".*""".r)
+
   override def createFS(p: Path) : (Array[JPath],Array[JPath]) =
   {
     var fls = new Array[JPath](0)
@@ -20,8 +22,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
 
   it should "1. PathSet should find the current state of the file system" in {
-    val matcher = PathMatcher(""".*""".r)
-    val pathSet = PathSet(Path(srcGlobal), matcher, 3)
+    val pathSet = PathSet(Path(srcGlobal)) * allMatcher
     val foo = Path(srcGlobal).createTempFile("foo", ".tmp")
     Path(srcGlobal).createTempFile("bar", ".tmp")
     Path(srcGlobal).createTempFile("baz", ".scala")
@@ -36,7 +37,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
 
 
-  it should "2. test should search only till given maxDepth" in {
+  it should "2. test should search at exactly the given depth" in {
     //building testing tree
     val src = Path(srcGlobal)
     val dir1 = src.createTempDir("dir1_")
@@ -50,26 +51,24 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     dir4.createTempFile("file_4_", ".tmp")
     src.createTempFile("file_5_",".tmp")
 
-    val matcher = PathMatcher(""".*\.tmp""".r)
     //val pathSet = PathSet(Path(srcGlobal), matcher, 3)
     var numTmps = 0
-    PathSet(Path(srcGlobal), matcher, 2).foreach((p:Path) => numTmps+=1)
-    assert(numTmps==3)
+    (PathSet(Path(srcGlobal)) * allMatcher).foreach((p:Path) => numTmps+=1)
+    assert(numTmps==2)
     numTmps = 0
-    PathSet(Path(srcGlobal), matcher, 3).foreach((p:Path) => numTmps+=1)
-    assert(numTmps==5)
+    (PathSet(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => numTmps+=1)
+    assert(numTmps==4)
   }
 
   it should "3. PathSet should apply its filter to the elements it finds" in {
     val matcher = PathMatcher(".*.tmp".r)
-    val pathSet = PathSet(Path(srcGlobal), matcher, 3)
+    val pathSet = PathSet(Path(srcGlobal)) * matcher
     Path(srcGlobal).createTempFile("foo", ".tmp")
     Path(srcGlobal).createTempFile("bar", ".tmp")
     Path(srcGlobal).createTempFile("baz", ".scala")
     var numTmps = 0
     pathSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
-
   }
 
 }
