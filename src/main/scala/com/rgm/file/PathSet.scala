@@ -69,18 +69,14 @@ final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMat
             override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes): FileVisitResult = {
 
               //println("Matching directory " + dir + "\td = " + d)//REMOVE
-              if (d < 0) {
-                return FileVisitResult.SKIP_SUBTREE
+
+              if (matcher.matches(Path(dir)) && !(root == Path(dir))) {
+                f(Path(dir))
               }
-              else if(d == 0) {
-                if (matcher.matches(Path(dir)) && !(root == Path(dir))) {
-                  f(Path(dir))
-                }
-                return FileVisitResult.SKIP_SUBTREE
-              }
-              if (d < 0)
+              if (d <= 0)
                 FileVisitResult.SKIP_SUBTREE
               else {
+                d -= 1
                 FileVisitResult.CONTINUE
               }
             }
