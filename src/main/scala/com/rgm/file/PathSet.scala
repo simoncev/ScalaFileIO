@@ -109,12 +109,14 @@ final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMat
               }
               else if(d == 0) {
                 if (matcher.matches(Path(dir)) && !(root == Path(dir))) {
+                  //println("FPATH = " + dir + "\t\tmatcher = " + matcher.matches(Path(dir)))
                   f(Path(dir))
                 }
                 return FileVisitResult.SKIP_SUBTREE
               }
               else {
                 if (matcher.matches(Path(dir)) && !(root == Path(dir))) {
+                  //println("FPATH = " + dir + "\t\tmatcher = " + matcher.matches(Path(dir)))
                   f(Path(dir))
                 }
                 d -= 1

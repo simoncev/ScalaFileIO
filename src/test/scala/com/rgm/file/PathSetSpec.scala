@@ -90,4 +90,23 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     assert(numFound == 0)
     flagGlobal = true
   }
+
+  it should "6. test *** function" in {
+    buildTmpFileTree
+    val pathSet = PathSet(Path(srcGlobal))
+    var num = 0
+    (pathSet ***).foreach((p: Path) => {num+=1; println("path = " + p)})
+    assert(num==9)
+    flagGlobal = true
+  }
+
+  it should "7. test exclude function" in {
+    buildTmpFileTree
+    val pathSet = PathSet(Path(srcGlobal))
+    var num = 0
+    //((pathSet ***) --- (pathSet ** (""".*\.tmp""",10))).foreach((p: Path) => {num+=1;println("path = " + p)})
+    (pathSet ** (""".*\.tmp""",10)).foreach((p: Path) => {num+=1;println("path = " + p)})
+    assert(num==4)
+    flagGlobal = true
+  }
 }
