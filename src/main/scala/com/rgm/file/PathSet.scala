@@ -103,7 +103,7 @@ final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMat
         Files.walkFileTree(root.jpath,
           new SimpleFileVisitor[JPath] {
             override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes): FileVisitResult = {
-              //println("Matching directory " + dir + " under root " + root.jpath)//REMOVE
+              //println("Matching directory " + dir + "\td = " + d)//REMOVE
               if (d < 0) {
                 return FileVisitResult.SKIP_SUBTREE
               }
