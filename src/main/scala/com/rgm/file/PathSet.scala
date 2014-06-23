@@ -59,6 +59,10 @@ object PathSet {
       result
     }
   }
+
+  def apply(m: PathMatcher, depth: Int){
+    return new FilteredPathSet(, depth, m)
+  }
 }
 
 abstract class PathSet extends Traversable[Path] {
@@ -73,13 +77,44 @@ class SimplePathSet(root: Path) extends PathSet {
   }
 }
 
-final class FilteredPathSet(p: Path, depth: Int, m: PathMatcher) extends PathSet {
-  private var memberPathSet: PathSet
+final class FilteredPathSet(p: PathSet, depth: Int, matcher: PathMatcher) extends PathSet {
+  private var memberPathSet: PathSet = p
 
   override def foreach[U](f: Path => U) = {
-    //TODO
+        var d: Int = depth
+        for(root <- p) {
+          if (root.exists()) {
+            Files.walkFileTree(root.jpath,
+              new SimpleFileVisitor[JPath] {
+                override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes): FileVisitResult = {
+                  if (d <= 0) {
+                    return FileVisitResult.SKIP_SUBTREE
+                  }
+                  else {
+                    if (matcher.matches(Path(dir))) {
+                      f(com.rgm.file.Path(dir))
+                    }
+                    d -= 1
+                    FileVisitResult.CONTINUE
+                  }
+                }
+
+                override def visitFile(file: JPath, attrs: BasicFileAttributes): FileVisitResult = {
+                  if (matcher.matches(Path(file)))
+                    f(com.rgm.file.Path(file))
+                  FileVisitResult.CONTINUE
+                }
+
+                override def postVisitDirectory(dir: JPath, e: IOException): FileVisitResult = {
+                  d += 1
+                  FileVisitResult.CONTINUE
+                }
+              })
+          }
+        }
   }
 }
+
 
 final class CompoundPathSet(pathSet1: PathSet, pathSet2: PathSet) extends PathSet {
 
