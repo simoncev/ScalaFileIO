@@ -33,6 +33,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     dir4.createTempFile("file_4_", ".tmp")
     src.createTempFile("file_5_",".tmp")
   }
+
   it should "1. PathSet should find the current state of the file system" in {
     val pathSet = PathSet(Path(srcGlobal)) * allMatcher
     val foo = Path(srcGlobal).createTempFile("foo", ".tmp")
@@ -44,40 +45,20 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     foo.delete()
     numTmps = 0
     pathSet.foreach(p => numTmps += 1)
-
-    assert(numTmps == 3)
+    assert(numTmps == 2)
     flagGlobal = true
   }
 
 
   it should "2. test should search at exactly the given depth" in {
     //building testing tree
-    val src = Path(srcGlobal)
-    val dir1 = src.createTempDir("dir1_")
-    val dir2 = src.createTempDir("dir2_")
-    val dir3 = dir1.createTempDir("dir3_")
-    val dir4 = dir2.createTempDir("dir4_")
-
-    dir1.createTempFile("file_1_",".tmp")
-    dir1.createTempFile("file_2_",".tmp")
-    dir3.createTempFile("file_3_",".tmp")
-    dir4.createTempFile("file_4_", ".tmp")
-    src.createTempFile("file_5_",".tmp")
-
-    //val pathSet = PathSet(Path(srcGlobal), matcher, 3)
+    buildTmpFileTree
     var numTmps = 0
     (PathSet(Path(srcGlobal)) * allMatcher).foreach((p:Path) => numTmps+=1)
-    //assert(numTmps==2)
+    assert(numTmps==3)
     numTmps = 0
     (PathSet(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => numTmps+=1)
-    //assert(numTmps==4)
-    assert(true)
-    (PathSet(Path(srcGlobal)) * allMatcher).foreach((p:Path) => {numTmps+=1; println("Found: " + p)})
-    assert(numTmps==2)
-    numTmps = 0
-    println("\n\n")//REMOVE
-    (PathSet(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => {numTmps+=1; println("Found: " + p)})//REMOVE the println
-    assert(numTmps==4)
+    assert(numTmps==5)
     flagGlobal = true
   }
 
@@ -96,8 +77,9 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "4. test *" in {
     buildTmpFileTree
     val pathSet = PathSet(Path(srcGlobal))
-    (pathSet * """.*""".r).foreach((p: Path) => println("matches = " + p))
-    assert(false)
+    var num = 0
+    (pathSet * """.*""".r).foreach((p: Path) => num+=1)
+    assert(num==3)
     flagGlobal = true
   }
 
