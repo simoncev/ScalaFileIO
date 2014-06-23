@@ -71,6 +71,7 @@ final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMat
               println("Matching directory " + dir + " under root " + root.jpath)//REMOVE
               if (matcher.matches(Path(dir)) && !(root == Path(dir))) {
                 f(Path(dir))
+
               }
               if (d < 0)
                 FileVisitResult.SKIP_SUBTREE
@@ -80,7 +81,7 @@ final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMat
             }
 
             override def visitFile(file: JPath, attrs: BasicFileAttributes): FileVisitResult = {
-              println("Matching file " + file + " under root " + root.jpath)//REMOVE
+              //println("Matching file " + file + " under root " + root.jpath)//REMOVE
               if (matcher.matches(Path(file)))
                 f(Path(file))
               FileVisitResult.CONTINUE
