@@ -141,9 +141,9 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "9. Chain several filters together to cherrypick a file" in {
     buildTmpFileTree
     val rootSet = PathSet(Path(srcGlobal))
-    val complexSet = rootSet +++ (rootSet ** PathMatcher(""".*dir[^\/]*""".r)) +++ (rootSet * allMatcher * PathMatcher(""".*\.tmp""".r))
+    val complexSet = rootSet +++ (rootSet ** PathMatcher(""".*dir[^\/]*""".r)) +++ (rootSet * allMatcher * PathMatcher(".*file.*".r))
     var numTmps = 0
-    complexSet.foreach((p:Path) => {numTmps+=1; println("pathfy = " + p)})
+    complexSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 7)
     val exclusionSet = complexSet --- (rootSet * allMatcher * PathMatcher(srcGlobal + "*/dir_3*"))
     numTmps = 0

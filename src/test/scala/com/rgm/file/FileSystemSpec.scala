@@ -242,7 +242,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
     //test create /tmpDir/file.tmp -> move to unix fileSystem
     val d = p.createTempDir("tmpDir")
-    println("temp dir in->" + d.path)
     d.exists()
     val dst = Path("/tmpDir")(zipSystem)
     d.moveDirectory(dst)
