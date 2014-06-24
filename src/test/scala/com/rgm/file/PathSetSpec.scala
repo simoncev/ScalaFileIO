@@ -22,10 +22,10 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
   def buildTmpFileTree = {
     val src = Path(srcGlobal)
-    val dir1 = src.createTempDir("dir1_")
-    val dir2 = src.createTempDir("dir2_")
-    val dir3 = dir1.createTempDir("dir3_")
-    val dir4 = dir2.createTempDir("dir4_")
+    val dir1 = src.createTempDir("dir_1_")
+    val dir2 = src.createTempDir("dir_2_")
+    val dir3 = dir1.createTempDir("dir_3_")
+    val dir4 = dir2.createTempDir("dir_4_")
 
     dir1.createTempFile("file_1_",".tmp")
     dir1.createTempFile("file_2_",".tmp")
@@ -101,14 +101,12 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //.foreach((p: Path) => num+=1)
-  it should "7. test exclude function" in {
+  it should "7. simple test union function" in {
     buildTmpFileTree
     var num = 0
-    val pathSet = ((PathSet(Path(srcGlobal)) ** ("""dir.*""".r,10)) +++ (PathSet(Path(srcGlobal)) ** (""".*\.tmp""".r,10)))
-    //(pathSet **( """.*\.tmp""".r, 10)).foreach((p: Path) => num += 1)
-    Path(srcGlobal).createTempDir("dir_5_")
-    pathSet.foreach((p: Path) => {num+=1; println("path = " + p)})
-    assert(num == 4)
+    val pathSet = ((PathSet(Path(srcGlobal)) ** (""".*dir[^\/]*""".r,10)) +++ (PathSet(Path(srcGlobal)) ** (""".*\.tmp""".r,10)))
+    pathSet.foreach((p: Path) => num+=1)
+    assert(num == 9)
     flagGlobal = true
   }
 
@@ -132,6 +130,15 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     assert(numTmps == 2)
 
     flagGlobal = true
+  }
 
+  it should "11. exlcudes test" in {
+    buildTmpFileTree
+    var num = 0
+    val pathSet = ((PathSet(Path(srcGlobal)) ***) --- (PathSet(Path(srcGlobal)) ** (""".*\.tmp""".r,10)))
+    Path(srcGlobal).createTempDir("dir_5_")
+    pathSet.foreach((p: Path) => num+=1)
+    assert(num == 5)
+    flagGlobal = true
   }
 }
