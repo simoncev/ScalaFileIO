@@ -6,6 +6,7 @@ import scala.collection.mutable.ListBuffer
 import scala.util.{Try, Random}
 import java.net.URI
 import java.util
+import scala.language.postfixOps
 
 
 class PathSetSpec extends FlatSpec with FileSetupTeardown {

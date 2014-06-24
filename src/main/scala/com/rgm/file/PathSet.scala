@@ -33,7 +33,7 @@ abstract class PathSet extends Traversable[Path] {
 
   def *(matcher: PathMatcher): PathSet = new FilteredPathSet(this, 1, matcher)
 
-  def **(matcher: PathMatcher): PathSet = new FilteredPathSet(this, 1, matcher)
+  def **(matcher: PathMatcher): PathSet = new FilteredPathSet(this, Int.MaxValue, matcher)
 
   def **(matcher: PathMatcher, d: Int): PathSet = new FilteredPathSet(this, d, matcher)
 
