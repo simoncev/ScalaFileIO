@@ -18,7 +18,7 @@ object PathSet {
     else {
       var result: PathSet = new SimplePathSet(path)
       for (p <- paths) {
-        result = new CompoundPathSet(result, new SimplePathSet(p))//replace with +++?
+        result = result +++ new SimplePathSet(p)
       }
       result
     }
@@ -28,7 +28,6 @@ object PathSet {
 abstract class PathSet extends Traversable[Path] {
   def +++(includes: PathSet): PathSet = new CompoundPathSet(this, includes)
 
-
   def ---(excludes: PathSet): PathSet = new ExclusionPathSet(this, excludes)
 
   def *(matcher: PathMatcher): PathSet = new FilteredPathSet(this, 1, matcher)
@@ -37,17 +36,15 @@ abstract class PathSet extends Traversable[Path] {
 
   def **(matcher: PathMatcher, d: Int): PathSet = new FilteredPathSet(this, d, matcher)
 
-
   def *** : PathSet = this ** (PathMatcher(""".*""".r), Int.MaxValue)
 
   def /(literal: String): PathSet = this ** (PathMatcher(literal),1)
 }
 
 final class SimplePathSet(root: Path) extends PathSet {
-  private var memberPath: Path = root
 
   override def foreach[U](f: Path => U) = {
-    f(memberPath)
+    f(root)
   }
 }
 
