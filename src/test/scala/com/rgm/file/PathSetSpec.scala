@@ -144,7 +144,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     var numTmps = 0
     complexSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 6)
-    val exclusionSet = complexSet --- (rootSet * allMatcher * PathMatcher(srcGlobal + "/dir3*"))
+    val exclusionSet = complexSet --- (rootSet * allMatcher * PathMatcher(srcGlobal + "/*/dir3*"))
     numTmps = 0
     exclusionSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 5)
@@ -163,7 +163,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "11. exlcudes test" in {
     buildTmpFileTree
     var num = 0
-    val pathSet = ((PathSet(Path(srcGlobal)) ***) --- (PathSet(Path(srcGlobal)) ** (""".*\.tmp""".r,10)))
+    val pathSet = ((PathSet(Path(srcGlobal)) ***) --- (PathSet(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r)))
     Path(srcGlobal).createTempDir("dir_5_")
     pathSet.foreach((p: Path) => num+=1)
     assert(num == 5)

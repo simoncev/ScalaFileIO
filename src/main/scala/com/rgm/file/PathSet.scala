@@ -65,15 +65,7 @@ abstract class PathSet extends Traversable[Path] {
   def +++(includes: PathSet): PathSet = new CompoundPathSet(this, includes)
 
 
-  def ---(excludes: PathSet): PathSet = {
-    var result = this.toList
-    for(i <- excludes)
-      result = result diff List(i)
-    var r: PathSet = new SimplePathSet(result.head)
-    for (p <- result.tail)
-      r = new CompoundPathSet(r, new SimplePathSet(p))//replace with +++?
-    r
-  }
+  def ---(excludes: PathSet): PathSet = new ExclusionPathSet(this, excludes)
 
   def *(matcher: PathMatcher): PathSet = new FilteredPathSet(this, 1, matcher)
 
@@ -87,7 +79,7 @@ abstract class PathSet extends Traversable[Path] {
   def /(literal: String): PathSet = this ** (PathMatcher(literal),1)
 }
 
-class SimplePathSet(root: Path) extends PathSet {
+final class SimplePathSet(root: Path) extends PathSet {
   private var memberPath: Path = root
 
   override def foreach[U](f: Path => U) = {
@@ -146,6 +138,14 @@ final class CompoundPathSet(pathSet1: PathSet, pathSet2: PathSet) extends PathSe
   override def foreach[U](f: Path => U) = {
     pathSet1.foreach(f)
     pathSet2.foreach(f)
+  }
+}
+
+final class ExclusionPathSet(superset: PathSet, excluded: PathSet) extends PathSet {
+
+  override def foreach[U](f: Path => U) = {
+    val excludees = excluded.toList
+    superset.foreach((p: Path) => if (!excludees.contains(p)) f(p))
   }
 }
 
