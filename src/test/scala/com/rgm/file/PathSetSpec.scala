@@ -147,7 +147,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     assert(numTmps == 7)
     val exclusionSet = complexSet --- (rootSet * allMatcher * PathMatcher(srcGlobal + "*/dir_3*"))
     numTmps = 0
-    exclusionSet.foreach((p:Path) => {numTmps+=1; println(p)})
+    exclusionSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 6)
   }
 

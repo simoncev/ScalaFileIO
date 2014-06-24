@@ -19,6 +19,7 @@ object SyntaxSpec extends Properties("Path")
   val zipFile = Paths.get("src/test/resources/dir1.zip")
   val uri = URI.create("jar:file:" + zipFile.toUri.getPath)
   val env:  util.Map[String, String] = new util.HashMap[String, String]()
+  Path(zipFile).deleteIfExists()
   env.put("create", "true")
   val zipSystem = FileSystem(FileSystems.newFileSystem(uri, env))
 
