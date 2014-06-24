@@ -48,7 +48,7 @@ final class SimplePathSet(root: Path) extends PathSet {
   }
 }
 
-final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMatcher) extends PathSet {
+final private class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMatcher) extends PathSet {
 
   override def foreach[U](f: Path => U) = {
     var d: Int = depth
@@ -90,16 +90,15 @@ final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMat
 
 
 
-final class CompoundPathSet(pathSet1: PathSet, pathSet2: PathSet) extends PathSet {
+final private class CompoundPathSet(pathSet: PathSet*) extends PathSet {
 
 
   override def foreach[U](f: Path => U) = {
-    pathSet1.foreach(f)
-    pathSet2.foreach(f)
+    for(i <- pathSet) i.foreach(f)
   }
 }
 
-final class ExclusionPathSet(superset: PathSet, excluded: PathSet) extends PathSet {
+final private class ExclusionPathSet(superset: PathSet, excluded: PathSet) extends PathSet {
 
   override def foreach[U](f: Path => U) = {
     val excludees = excluded.toList
