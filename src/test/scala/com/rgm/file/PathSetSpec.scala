@@ -100,7 +100,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     val dir1 = Path(srcGlobal).createTempDir("dir1")
     dir1.createTempFile("foo", ".tmp")
     dir1.createTempFile("bar", ".tmp")
-    dir1.createTempFile("baz", ".scala")
+    dir1.createTempFile("baz", ".tmp")
     var numTmps = 0
     pathSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
