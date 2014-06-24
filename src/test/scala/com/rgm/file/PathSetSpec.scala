@@ -83,7 +83,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
-  it should "5. Does not match root on calls to children" in {
+  it should "5. Does not match root on searches of children" in {
     val pathSet = PathSet(Path(srcGlobal).createTempDir("file_1_")) * allMatcher
     var numFound = 0
     pathSet.foreach((p: Path) => numFound += 1)
@@ -113,4 +113,6 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
 
   }
+
+  
 }
