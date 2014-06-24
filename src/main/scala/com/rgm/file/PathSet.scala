@@ -12,16 +12,8 @@ import collection.mutable.HashMap
 
 object PathSet {
 
-  def apply(path: Path, paths: Path*): PathSet = {
-    if (paths.isEmpty)
-      new SimplePathSet(path)
-    else {
-      var result: PathSet = new SimplePathSet(path)
-      for (p <- paths) {
-        result = result +++ new SimplePathSet(p)
-      }
-      result
-    }
+  def apply(paths: Path*): PathSet = {
+    new SimplePathSet(paths)
   }
 }
 
@@ -41,10 +33,10 @@ abstract class PathSet extends Traversable[Path] {
   def /(literal: String): PathSet = this ** (PathMatcher(literal),1)
 }
 
-final class SimplePathSet(root: Path) extends PathSet {
+final class SimplePathSet(roots: Seq[Path]) extends PathSet {
 
   override def foreach[U](f: Path => U) = {
-    f(root)
+    roots.foreach(f)
   }
 }
 
