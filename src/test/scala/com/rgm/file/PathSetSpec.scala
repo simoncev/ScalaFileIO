@@ -63,7 +63,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     assert(numTmps==3)
     numTmps = 0
     (PathSet(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => numTmps+=1)
-    assert(numTmps==5)
+    assert(numTmps==4)
     flagGlobal = true
   }
 
@@ -141,14 +141,14 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "9. Chain several filters together to cherrypick a file" in {
     buildTmpFileTree
     val rootSet = PathSet(Path(srcGlobal))
-    val complexSet = rootSet +++ (rootSet ** PathMatcher(".*dir.*".r)) +++ (rootSet * allMatcher * PathMatcher(".*file.*".r))
+    val complexSet = rootSet +++ (rootSet ** PathMatcher(""".*dir[^\/]*""".r)) +++ (rootSet * allMatcher * PathMatcher(""".*\.tmp""".r))
     var numTmps = 0
-    complexSet.foreach((p:Path) => numTmps+=1)
-    assert(numTmps == 6)
-    val exclusionSet = complexSet --- (rootSet * allMatcher * PathMatcher(srcGlobal + "/*/dir3*"))
+    complexSet.foreach((p:Path) => {numTmps+=1; println("pathfy = " + p)})
+    assert(numTmps == 7)
+    val exclusionSet = complexSet --- (rootSet * allMatcher * PathMatcher(srcGlobal + "*/dir_3*"))
     numTmps = 0
     exclusionSet.foreach((p:Path) => numTmps+=1)
-    assert(numTmps == 5)
+    assert(numTmps == 6)
   }
 
   it should "10. Duplicate files which are in the intersection of two sets being unioned" in {

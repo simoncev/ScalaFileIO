@@ -79,7 +79,7 @@ final class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMat
             }
 
             override def visitFile(file: JPath, attrs: BasicFileAttributes): FileVisitResult = {
-              if (matcher.matches(Path(file)))
+              if (matcher.matches(Path(file)) && !(root == Path(file)))
                 f(Path(file))
               FileVisitResult.CONTINUE
             }
