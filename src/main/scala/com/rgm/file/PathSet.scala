@@ -49,6 +49,8 @@ abstract class PathSet extends Traversable[Path] {
   def *** : PathSet = this ** (PathMatcher(""".*""".r), Int.MaxValue)
 
   def /(literal: String): PathSet = this ** (PathMatcher(literal),1)
+
+  def ancestorsOf(p: Path)
 }
 
 final class SimplePathSet(roots: Path*) extends PathSet {
@@ -56,12 +58,27 @@ final class SimplePathSet(roots: Path*) extends PathSet {
   override def foreach[U](f: Path => U) = {
     roots.foreach(f)
   }
+
+  override def ancestorsOf(i: Path) : Set[Path] = {
+    var result: Set[Path] = null
+    for(p <- root) {
+      if(i startsWith p)
+        result += p
+    }
+    result
+  }
 }
 
 final private class CompoundPathSet(pathSets: PathSet*) extends PathSet {
-  val pathSet: Seq[PathSet] = pathSets
+  val pathSetSeq: Seq[PathSet] = pathSets
   override def foreach[U](f: Path => U) = {
-    for(i <- pathSets) i.foreach(f)
+    for(i <- pathSetSeq) i.foreach(f)
+  }
+
+  override def ancestorsOf(i: Path): Set[Path] = {
+    for(p <- pathSetSeq) {
+      p.ancestorsOf(i)
+    }
   }
 }
 
@@ -70,6 +87,12 @@ final private class ExclusionPathSet(superset: PathSet, excluded: PathSet) exten
   override def foreach[U](f: Path => U) = {
     val excludees = excluded.toList
     superset.foreach((p: Path) => if (!excludees.contains(p)) f(p))
+  }
+
+  override def ancestorsOf(i: Path) = {
+    val aAnc: Set[Path] = superset.ancestorsOf(i)
+    val bAnc: Set[Path] = excluded.ancestorsOf(i)
+    aAnc -- bAnc
   }
 }
 
