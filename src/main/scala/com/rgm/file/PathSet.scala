@@ -13,12 +13,21 @@ import collection.mutable.HashMap
 object PathSet {
 
   def apply(paths: Path*): PathSet = {
-    new SimplePathSet(paths)
+    if (paths.size == 1)
+      new SimplePathSet(paths(0))
+    else {
+      val pathSets = paths.map(p => new SimplePathSet(_)).toSeq
+      new CompoundPathSet(pathSets: _*)
+    }
   }
 }
 
 abstract class PathSet extends Traversable[Path] {
-  def +++(includes: PathSet): PathSet = new CompoundPathSet(this, includes)
+  def +++(includes: PathSet): PathSet =
+    if (this.isInstanceOf[CompoundPathSet] && includes.isInstanceOf[CompoundPathSet])
+      new CompoundPathSet(this.asInstanceOf[SimplePathSet].memberPaths ++ includes.asInstanceOf[SimplePathSet].memberPaths)
+    else
+      new CompoundPathSet(this, includes)
 
   def ---(excludes: PathSet): PathSet = new ExclusionPathSet(this, excludes)
 
@@ -33,10 +42,10 @@ abstract class PathSet extends Traversable[Path] {
   def /(literal: String): PathSet = this ** (PathMatcher(literal),1)
 }
 
-final class SimplePathSet(roots: Seq[Path]) extends PathSet {
+final class SimplePathSet(root: Path) extends PathSet {
 
   override def foreach[U](f: Path => U) = {
-    roots.foreach(f)
+    f(root)
   }
 }
 
