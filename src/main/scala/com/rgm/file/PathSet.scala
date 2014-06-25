@@ -58,7 +58,7 @@ abstract class PathSet extends Traversable[Path] {
 final class SimplePathSet(roots: Path*) extends PathSet {
   val root: Seq[Path] = roots
   override def foreach[U](f: Path => U) = {
-    roots.foreach(f)
+    roots.foreach((p: Path) => if (p.exists()) f(p))
   }
 
   override def ancestorsOf(i: Path) : Set[Path] = {
@@ -92,8 +92,7 @@ final private class CompoundPathSet(pathSets: PathSet*) extends PathSet {
 final private class ExclusionPathSet(superset: PathSet, excluded: PathSet) extends PathSet {
 
   override def foreach[U](f: Path => U) = {
-    val excludees = excluded.toList
-    superset.foreach((p: Path) => if (!excludees.contains(p)) f(p))
+    superset.foreach((p: Path) => if (!excluded.ancestorsOf(p).contains(p)) f(p))
   }
 
   override def ancestorsOf(i: Path) = {
@@ -133,5 +132,19 @@ final private class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher:
           })
       }
     }
+  }
+
+  override def ancestorsOf(p: Path): Set[Path] = {
+    val ancestorRoots = memberPathSet.ancestorsOf(p)
+    var ancestorSet = Set[Path]()
+    for (root <- ancestorRoots) {
+      if (p startsWith root)
+        for(n <- 1 to Math.min(depth, p.segmentCount)) {
+          val candidateAncestor = Path(p.segments.slice(0, root.segmentCount + n).mkString("/"))
+          if (matcher.matches(candidateAncestor))
+            ancestorSet += candidateAncestor
+        }
+    }
+    ancestorSet
   }
 }
