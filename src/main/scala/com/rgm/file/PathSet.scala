@@ -76,7 +76,7 @@ final private class CompoundPathSet(pathSets: PathSet*) extends PathSet {
   val pathSetSeq: Seq[PathSet] = pathSets
 
   override def foreach[U](f: Path => U) = {
-    for (i <- pathSets) i.foreach(f)
+    for (i <- pathSetSeq) i.foreach(f)
   }
 
   override def ancestorsOf(p: Path): Set[Path] = {
@@ -139,12 +139,10 @@ final private class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher:
     var ancestorSet = Set[Path]()
     for (root <- ancestorRoots) {
       if (p startsWith root)
-        for(n <- 1 to Math.min(depth, p.segmentCount)) {
-          val candidateAncestor = Path(p.segments.slice(0, root.segmentCount + n).mkString("/"))
+        for(n <- root.segmentCount + 1 to Math.min(root.segmentCount + depth, p.segmentCount)) {
+          val candidateAncestor = Path(p.segments.slice(0, n).mkString(p.fileSystem.separator))
           if (matcher.matches(candidateAncestor))
             ancestorSet += candidateAncestor
-          else
-            println("rejected: " + candidateAncestor)//REMOVE
         }
     }
     ancestorSet

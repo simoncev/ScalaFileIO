@@ -186,18 +186,17 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "13. Exclude each different type of set correctly" in {
     buildTmpFileTree
     val allSet = PathSet(Path(srcGlobal)).*** +++ PathSet(Path(srcGlobal))
-    val noSource = allSet --- PathSet(Path(srcGlobal))
     var numTmps = 0
+    allSet.foreach((p:Path) => numTmps+=1)
+    assert(numTmps == 10)
+    val noSource = allSet --- PathSet(Path(srcGlobal))
+    numTmps = 0
     noSource.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 9)
     val noChildren = allSet --- (PathSet(Path(srcGlobal)) * allMatcher)
     numTmps = 0
-    noChildren.foreach((p:Path) => {numTmps+=1; println(p)})
+    noChildren.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 7)
-//    val someChildren = allSet --- (PathSet(Path(srcGlobal)) * allMatcher)
-//    numTmps = 0
-//    noChildren.foreach((p:Path) => numTmps+=1)
-//    assert(numTmps == 7)
 
   }
 
