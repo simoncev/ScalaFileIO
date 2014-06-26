@@ -143,6 +143,8 @@ final private class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher:
           val candidateAncestor = Path(p.segments.slice(0, root.segmentCount + n).mkString("/"))
           if (matcher.matches(candidateAncestor))
             ancestorSet += candidateAncestor
+          else
+            println("rejected: " + candidateAncestor)//REMOVE
         }
     }
     ancestorSet
