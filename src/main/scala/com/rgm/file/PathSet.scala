@@ -92,6 +92,7 @@ final private class CompoundPathSet(pathSets: PathSet*) extends PathSet {
 final private class ExclusionPathSet(superset: PathSet, excluded: PathSet) extends PathSet {
 
   override def foreach[U](f: Path => U) = {
+    println("YOLOMOFO")
     superset.foreach((p: Path) => if (!excluded.ancestorsOf(p).contains(p)) f(p))
   }
 
@@ -138,12 +139,15 @@ final private class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher:
     val ancestorRoots = memberPathSet.ancestorsOf(p)
     var ancestorSet = Set[Path]()
     for (root <- ancestorRoots) {
-      if (p startsWith root)
-        for(n <- root.segmentCount + 1 to Math.min(root.segmentCount + depth, p.segmentCount)) {
+      if (p startsWith root) {
+        val deepestPath: Int = if (root.segmentCount + depth < 0) Int.MaxValue else root.segmentCount + depth
+        for (n <- root.segmentCount + 1 to Math.min(deepestPath, p.segmentCount)) {
           val candidateAncestor = Path(p.segments.slice(0, n).mkString(p.fileSystem.separator))
-          if (matcher.matches(candidateAncestor))
+          if (matcher.matches(candidateAncestor)) {
             ancestorSet += candidateAncestor
+          }
         }
+      }
     }
     ancestorSet
   }
