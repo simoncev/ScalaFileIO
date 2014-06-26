@@ -42,11 +42,11 @@ abstract class PathSet extends Traversable[Path] {
 
   def ---(excludes: PathSet): PathSet = new ExclusionPathSet(this, excludes)
 
-  def *(matcher: PathMatcher): PathSet = new FilteredPathSet(this, 1, matcher)
+  def *(matcher: PathMatcher): PathSet = new TreeWalkPathSet(this, 1, matcher)
 
-  def **(matcher: PathMatcher): PathSet = new FilteredPathSet(this, Int.MaxValue, matcher)
+  def **(matcher: PathMatcher): PathSet = new TreeWalkPathSet(this, Int.MaxValue, matcher)
 
-  def **(matcher: PathMatcher, d: Int): PathSet = new FilteredPathSet(this, d, matcher)
+  def **(matcher: PathMatcher, d: Int): PathSet = new TreeWalkPathSet(this, d, matcher)
 
   def *** : PathSet = this **(PathMatcher( """.*""".r), Int.MaxValue)
 
@@ -54,9 +54,9 @@ abstract class PathSet extends Traversable[Path] {
 
   def ancestorsOf(p: Path): Set[Path]
 
-//  override def filter(p: Path => Boolean) {
-//
-//  }
+  override def filter(p: Path => Boolean): PathSet = {
+    new FilteredPathSet(this, p)
+  }
 
 }
 
@@ -107,7 +107,16 @@ final private class ExclusionPathSet(superset: PathSet, excluded: PathSet) exten
   }
 }
 
-final private class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMatcher) extends PathSet {
+final private class FilteredPathSet(p: PathSet, func: Path => Boolean) extends PathSet {
+  override def foreach[U](f: Path => U) = {
+    p.foreach((p: Path) => if(func(p)) f(p))
+  }
+
+  override def ancestorsOf(i: Path): Set[Path] = {
+    p.ancestorsOf(i)
+  }
+}
+final private class TreeWalkPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMatcher) extends PathSet {
 
   override def foreach[U](f: Path => U) = {
     var d: Int = depth
