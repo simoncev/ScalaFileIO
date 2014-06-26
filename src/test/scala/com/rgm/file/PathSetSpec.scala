@@ -164,7 +164,8 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "11. exlcudes & up to date system test" in {
     buildTmpFileTree
     var num = 0
-    val pathSet = ((PathSet(Path(srcGlobal)) ***) --- (PathSet(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r)))
+    val pathSet = PathSet(Path(srcGlobal)).*** --- (PathSet(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r))
+    println(pathSet.isInstanceOf[ExclusionPathSet])
     Path(srcGlobal).createTempDir("dir_5_")
     pathSet.foreach((p: Path) => num+=1)
     assert(num == 5)
@@ -189,14 +190,22 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     var numTmps = 0
     allSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 10)
-    val noSource = allSet --- PathSet(Path(srcGlobal))
+    val noSimplePathSet = allSet --- PathSet(Path(srcGlobal))
     numTmps = 0
-    noSource.foreach((p:Path) => numTmps+=1)
+    noSimplePathSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 9)
-    val noChildren = allSet --- (PathSet(Path(srcGlobal)) * allMatcher)
+    val noFilteredPathSet = allSet --- (PathSet(Path(srcGlobal)) * allMatcher)
     numTmps = 0
-    noChildren.foreach((p:Path) => numTmps+=1)
+    noFilteredPathSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 7)
+    val nestedExclude = allSet --- noFilteredPathSet
+    numTmps = 0
+    nestedExclude.foreach((p:Path) => numTmps+=1)
+    assert(numTmps == 3)
+    val noCompoundPathSet = allSet --- (PathSet(Path(srcGlobal)) +++ nestedExclude)
+    numTmps = 0
+    noCompoundPathSet.foreach((p:Path) => numTmps+=1)
+    assert(numTmps == 6)
 
   }
 
@@ -210,4 +219,23 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     assert(num==5)
     flagGlobal = true
   }
+
+
+  it should "15. Use slash to build PathSets with globs" in {
+    val matcher = PathMatcher(srcGlobal + "*.tmp")
+    val pathSet = PathSet(Path(srcGlobal)) / (srcGlobal + "*.tmp")
+    Path(srcGlobal).createTempFile("foo", ".tmp")
+    Path(srcGlobal).createTempFile("bar", ".tmp")
+    Path(srcGlobal).createTempFile("baz", ".scala")
+    val dir1 = Path(srcGlobal).createTempDir("dir1")
+    dir1.createTempFile("foo", ".tmp")
+    dir1.createTempFile("bar", ".tmp")
+    dir1.createTempFile("baz", ".tmp")
+    var numTmps = 0
+    pathSet.foreach((p:Path) => numTmps+=1)
+    assert(numTmps == 2)
+
+  }
+
+
 }

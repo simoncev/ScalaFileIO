@@ -144,12 +144,8 @@ final private class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher:
     var ancestorSet = Set[Path]()
     for (root <- ancestorRoots) {
       if (p startsWith root) {
-        var run = 0
-        if(root.segmentCount + depth < 0 )
-          run = Int.MaxValue
-        else
-          run = root.segmentCount + depth
-        for (n <- root.segmentCount + 1 to Math.min(run, p.segmentCount)) {
+        val deepestPath: Int = if (root.segmentCount + depth < 0) Int.MaxValue else root.segmentCount + depth
+        for (n <- root.segmentCount + 1 to Math.min(deepestPath, p.segmentCount)) {
           val candidateAncestor = Path(p.segments.slice(0, n).mkString(p.fileSystem.separator))
           if (matcher.matches(candidateAncestor)) {
             ancestorSet += candidateAncestor
