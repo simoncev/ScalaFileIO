@@ -161,7 +161,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     assert(numTmps == 12)
   }
 
-  it should "11. exlcudes test" in {
+  it should "11. exlcudes & up to date system test" in {
     buildTmpFileTree
     var num = 0
     val pathSet = ((PathSet(Path(srcGlobal)) ***) --- (PathSet(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r)))
@@ -200,4 +200,14 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
 
   }
 
+  it should "14. test a very intricate set of +++, *, **, ***, and ---" in {
+    buildTmpFileTree
+    val srcPath = PathSet(Path(srcGlobal))
+    var num = 0
+    val ps1 = ((((srcPath ***) --- (srcPath ** PathMatcher(""".*\.tmp""".r)))) +++ ((srcPath ***) --- (srcPath ** PathMatcher(""".*dir[^\/]*""".r)))) +++ srcPath
+    val pathSet = ps1 --- (ps1 * PathMatcher(""".*\.tmp""".r))
+    pathSet.foreach((p: Path) => num +=1)
+    assert(num==5)
+    flagGlobal = true
+  }
 }

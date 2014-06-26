@@ -53,6 +53,11 @@ abstract class PathSet extends Traversable[Path] {
   def /(literal: String): PathSet = this **(PathMatcher(literal), 1)
 
   def ancestorsOf(p: Path): Set[Path]
+
+//  override def filter(p: Path => Boolean) {
+//
+//  }
+
 }
 
 final class SimplePathSet(roots: Path*) extends PathSet {
@@ -95,7 +100,7 @@ final private class ExclusionPathSet(superset: PathSet, excluded: PathSet) exten
     superset.foreach((p: Path) => if (!excluded.ancestorsOf(p).contains(p)) f(p))
   }
 
-  override def ancestorsOf(i: Path) = {
+  override def ancestorsOf(i: Path): Set[Path] = {
     val aAnc: Set[Path] = superset.ancestorsOf(i)
     val bAnc: Set[Path] = excluded.ancestorsOf(i)
     aAnc -- bAnc
@@ -113,7 +118,7 @@ final private class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher:
             override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes): FileVisitResult = {
               if (matcher.matches(Path(dir)) && !(root == Path(dir)))
                 f(Path(dir))
-              if(d == 0)
+              if (d == 0)
                 return FileVisitResult.SKIP_SUBTREE
               d -= 1
               FileVisitResult.CONTINUE
@@ -138,12 +143,19 @@ final private class FilteredPathSet(memberPathSet: PathSet, depth: Int, matcher:
     val ancestorRoots = memberPathSet.ancestorsOf(p)
     var ancestorSet = Set[Path]()
     for (root <- ancestorRoots) {
-      if (p startsWith root)
-        for(n <- root.segmentCount + 1 to Math.min(root.segmentCount + depth, p.segmentCount)) {
+      if (p startsWith root) {
+        var run = 0
+        if(root.segmentCount + depth < 0 )
+          run = Int.MaxValue
+        else
+          run = root.segmentCount + depth
+        for (n <- root.segmentCount + 1 to Math.min(run, p.segmentCount)) {
           val candidateAncestor = Path(p.segments.slice(0, n).mkString(p.fileSystem.separator))
-          if (matcher.matches(candidateAncestor))
+          if (matcher.matches(candidateAncestor)) {
             ancestorSet += candidateAncestor
+          }
         }
+      }
     }
     ancestorSet
   }
