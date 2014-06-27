@@ -236,10 +236,13 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     buildTmpFileTree
     val srcPath = PathSet(Path(srcGlobal))
     var num = 0
-    val ps1 = ((((srcPath ***) --- (srcPath ** PathMatcher(""".*\.tmp""".r)))) +++ ((srcPath ***) --- (srcPath ** PathMatcher(""".*dir[^\/]*""".r))))
-    ps1.filter((p: Path) => PathMatcher(""".*dir[^\/]*""".r).matches(p)).foreach((p: Path) => num+=1)
+    val ps1 = (((srcPath ***) --- (srcPath ** PathMatcher(""".*\.tmp""".r)))) +++ ((srcPath ***) --- (srcPath ** PathMatcher(""".*dir[^\/]*""".r)))
+    ps1.filter((p: Path) => PathMatcher(""".*dir[^\/]*""".r).matches(p))
+    
+    for (p <- ps1) {
+      num+=1
+    }
     assert(num==4)
     flagGlobal = true
-
   }
 }

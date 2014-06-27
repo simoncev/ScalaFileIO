@@ -6,6 +6,7 @@ import java.nio.file.attribute._
 import java.io.{File => JFile, IOException}
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.Builder
+import scala.collection.{TraversableViewLike, TraversableView}
 
 /**
  * Created by sshivaprasad on 6/18/14.
@@ -27,7 +28,8 @@ object PathSet {
 
 }
 
-abstract class PathSet extends Traversable[Path] {
+//correct generics?
+abstract class PathSet extends TraversableViewLike[Path, PathSet, TraversableView[Path, PathSet]] {
 
   def +++(includes: PathSet): PathSet = {
     (this, includes) match {
@@ -63,13 +65,8 @@ abstract class PathSet extends Traversable[Path] {
 
   def ancestorsOf(p: Path): Set[Path]
 
-  override def filter(p: Path => Boolean): PathSet = {
-    new FilteredPathSet(this, p)
-  }
+  protected def underlying: PathSet = this
 
-//  override def map[B, That](func: Path => B)(implicit cbf: CanBuildFrom[PathSet, B, That]): That = {
-//    cbf(this, func)
-//  }
 
 }
 
