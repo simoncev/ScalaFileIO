@@ -21,7 +21,7 @@ trait PathMatcher {
   /** Returns a matcher that accepts a `Path` if it matches either `this` matcher or `that` matcher. */
  	def || (that: PathMatcher): PathMatcher = PathMatcher(p => this.matches(p) || that.matches(p))
  
-  /** Returns a matcher that accepts a `Path` if it matches either `this` matcher and `that` matcher. */
+  /** Returns a matcher that accepts a `Path` if it matches `this` matcher and `that` matcher. */
  	def && (that: PathMatcher): PathMatcher = PathMatcher(p => this.matches(p) && that.matches(p))
  
   /** Returns a matcher that accepts a `Path` if it matches either `this` matcher but not `that` matcher. */
