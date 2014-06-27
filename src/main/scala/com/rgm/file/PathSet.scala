@@ -2,10 +2,11 @@ package com.rgm.file
 
 import java.nio.file.{SimpleFileVisitor, LinkOption, Files}
 import java.nio.file.{Path => JPath, FileSystem => JFileSystem, _}
-import scala.collection.mutable.ListBuffer
 import java.nio.file.attribute._
 import java.io.{File => JFile, IOException}
-import collection.mutable.HashMap
+import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable.Builder
+
 /**
  * Created by sshivaprasad on 6/18/14.
  */
@@ -13,9 +14,17 @@ import collection.mutable.HashMap
 object PathSet {
 
   def apply(paths: Path*): PathSet = {
-
-    new SimplePathSet(paths:_*)
+    new SimplePathSet(paths: _*)
   }
+
+//  private class MappedPathSetBuilder[Path,PathSet](pathSet: PathSet, func: Path=> Path) extends Builder[Path,PathSet] {
+//  }
+//
+//  implicit def canBuildFrom: CanBuildFrom[PathSet, Path, PathSet] =
+//    new CanBuildFrom {
+//      def apply(pathSet: PathSet, func: Path => Path): Builder[Path,PathSet] = new MappedPathSetBuilder(pathSet, func)
+//    }
+
 }
 
 abstract class PathSet extends Traversable[Path] {
@@ -58,6 +67,10 @@ abstract class PathSet extends Traversable[Path] {
     new FilteredPathSet(this, p)
   }
 
+//  override def map[B, That](func: Path => B)(implicit cbf: CanBuildFrom[PathSet, B, That]): That = {
+//    cbf(this, func)
+//  }
+
 }
 
 final class SimplePathSet(roots: Path*) extends PathSet {
@@ -90,7 +103,6 @@ final private class CompoundPathSet(pathSets: PathSet*) extends PathSet {
       ancestorSet = ancestorSet ++ pathSet.ancestorsOf(p)
     }
     ancestorSet
-
   }
 }
 
@@ -164,4 +176,20 @@ final private class TreeWalkPathSet(memberPathSet: PathSet, depth: Int, matcher:
     }
     ancestorSet
   }
+}
+
+final class MappedPathSet(pathSet: PathSet, func: Path => Path) extends PathSet {
+
+  override def foreach[U](f: Path => U) = {
+    for (p <- pathSet)
+      f(p)
+  }
+  override def ancestorsOf(p: Path): Set[Path] = {
+    var ancestorSet = Set[Path]()
+    for (candidateAncestor <- pathSet.ancestorsOf(p))
+      if (p startsWith func(candidateAncestor))
+        ancestorSet += func(candidateAncestor)
+    ancestorSet
+  }
+
 }

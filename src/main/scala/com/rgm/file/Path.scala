@@ -28,6 +28,13 @@ object Path {
 
 //  implicit def toFinder(path: Path): PathFinder = ???
 
+  //createTempFile
+  def createTempFile(dir: Path, prefix: String, suffix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempFile(dir.jpath,prefix, suffix, attrs:_*))
+
+  //createTempDir
+  def createTempDir(dir: Path, prefix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempDirectory(dir.jpath, prefix, attrs:_*))
+
+
 
 }
 
@@ -213,12 +220,6 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def isExecutable(): Boolean = Files.isExecutable(jpath)
 
   // etc.
-
-  //createTempFile
-  def createTempFile(prefix: String, suffix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempFile(jpath,prefix, suffix, attrs:_*))
-
-  //createTempDir
-  def createTempDir(prefix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempDirectory(jpath, prefix, attrs:_*))
 
   //checkAccess -> canWrite, canRead, canExecute
   def checkAccess(modes: AccessMode*): Boolean = {

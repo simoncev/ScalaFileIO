@@ -82,21 +82,21 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //createTempFile test
   it should "5. create temp file in target and check its existence" in {
-    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
+    val p = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
     assert(p.exists())
     flagGlobal = true
   }
 
   //createTempDir test
   it should "6. create temp dir in target and check its existence" in {
-    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempDir("test")
+    val p = Path.createTempDir(Path(FileSystems.getDefault.getPath(targetGlobal)), "test")
     assert(p.exists())
     flagGlobal = true
   }
 
   //delete test
   it should "7. create a temp file then delete it and check its existence" in {
-    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
+    val p = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
     p.delete()
     assert(p.nonExistent())
     flagGlobal = true
@@ -104,7 +104,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //deleteIfExists test
   it should "8. delete a file if it exists else fail" in {
-    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
+    val p = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
     p.delete()
     assert(p.nonExistent())
     flagGlobal = true
@@ -170,14 +170,14 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //checkAccess test=create tmp file(only read & write access) -> ensure READ/WRITE and no EXECUTE
   it should "17. creates a tmp file and checks permissions" in {
-    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
+    val p = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
     assert(p.checkAccess(AccessMode.READ) && p.checkAccess(AccessMode.WRITE) && !p.checkAccess(AccessMode.EXECUTE))
     flagGlobal = true
   }
 
   //access sets access modes for the given path
   it should "18. set the correct access modes" in {
-    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
+    val p = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
     val l = List(AccessMode.EXECUTE)
     p.setAccess(l)
     assert(p.checkAccess(AccessMode.EXECUTE))
@@ -236,13 +236,13 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     val p = Path("/")(zipSystem)
 
     //test create and copy files zip-> unix
-    val pth = p.createTempFile("test",".tmp")
+    val pth = Path.createTempFile(p, "test",".tmp")
     Path("src/test/resources/tmpCopy").deleteIfExists()
     pth.copyTo(Path("src/test/resources/tmpCopy"))
     assert(pth.exists() && Path("src/test/resources/tmpCopy").exists())
 
     //test create /tmpDir/file.tmp -> move to unix fileSystem
-    val d = p.createTempDir("tmpDir")
+    val d = Path.createTempDir(p, "tmpDir")
     d.exists()
     val dst = Path("/tmpDir")(zipSystem)
     d.moveDirectory(dst)

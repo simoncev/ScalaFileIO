@@ -23,23 +23,23 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
   def buildTmpFileTree = {
     val src = Path(srcGlobal)
-    val dir1 = src.createTempDir("dir_1_")
-    val dir2 = src.createTempDir("dir_2_")
-    val dir3 = dir1.createTempDir("dir_3_")
-    val dir4 = dir2.createTempDir("dir_4_")
+    val dir1 = Path.createTempDir(src, "dir_1_")
+    val dir2 = Path.createTempDir(src, "dir_2_")
+    val dir3 = Path.createTempDir(dir1, "dir_3_")
+    val dir4 = Path.createTempDir(dir2, "dir_4_")
 
-    dir1.createTempFile("file_1_",".tmp")
-    dir1.createTempFile("file_2_",".tmp")
-    dir3.createTempFile("file_3_",".tmp")
-    dir4.createTempFile("file_4_", ".tmp")
-    src.createTempFile("file_5_",".tmp")
+    Path.createTempFile(dir1, "file_1_",".tmp")
+    Path.createTempFile(dir1,"file_2_",".tmp")
+    Path.createTempFile(dir3, "file_3_",".tmp")
+    Path.createTempFile(dir4, "file_4_", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "file_5_",".tmp")
   }
 
   it should "1. PathSet should find the current state of the file system" in {
     val pathSet = PathSet(Path(srcGlobal)) * allMatcher
-    val foo = Path(srcGlobal).createTempFile("foo", ".tmp")
-    Path(srcGlobal).createTempFile("bar", ".tmp")
-    Path(srcGlobal).createTempFile("baz", ".scala")
+    val foo = Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "baz", ".scala")
     var numTmps = 0
     pathSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 3)
@@ -47,7 +47,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     numTmps = 0
     pathSet.foreach(p => numTmps += 1)
     assert(numTmps == 2)
-    val newFoo = Path(srcGlobal).createTempFile("foo", ".tmp")
+    val newFoo = Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
     numTmps = 0
     pathSet.foreach(p => numTmps += 1)
     assert(numTmps == 3)
@@ -70,9 +70,9 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "3. PathSet should apply its filter to the elements it finds" in {
     val matcher = PathMatcher(".*.tmp".r)
     val pathSet = PathSet(Path(srcGlobal)) * matcher
-    Path(srcGlobal).createTempFile("foo", ".tmp")
-    Path(srcGlobal).createTempFile("bar", ".tmp")
-    Path(srcGlobal).createTempFile("baz", ".scala")
+    Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "baz", ".scala")
     var numTmps = 0
     pathSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
@@ -89,7 +89,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
 
   it should "5. Does not match root on searches of children" in {
-    val pathSet = PathSet(Path(srcGlobal).createTempDir("file_1_")) * allMatcher
+    val pathSet = PathSet(Path.createTempDir(Path(srcGlobal), "file_1_")) * allMatcher
     var numFound = 0
     pathSet.foreach((p: Path) => numFound += 1)
     assert(numFound == 0)
@@ -119,13 +119,13 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "8. Apply filters built of globs to the elements it finds" in {
     val matcher = PathMatcher(srcGlobal + "*.tmp")
     val pathSet = PathSet(Path(srcGlobal)) * matcher
-    Path(srcGlobal).createTempFile("foo", ".tmp")
-    Path(srcGlobal).createTempFile("bar", ".tmp")
-    Path(srcGlobal).createTempFile("baz", ".scala")
-    val dir1 = Path(srcGlobal).createTempDir("dir1")
-    dir1.createTempFile("foo", ".tmp")
-    dir1.createTempFile("bar", ".tmp")
-    dir1.createTempFile("baz", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "baz", ".scala")
+    val dir1 = Path.createTempDir(Path(srcGlobal), "dir1")
+    Path.createTempFile(dir1, "foo", ".tmp")
+    Path.createTempFile(dir1, "bar", ".tmp")
+    Path.createTempFile(dir1, "baz", ".tmp")
     var numTmps = 0
     pathSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
@@ -166,7 +166,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     var num = 0
     val pathSet = PathSet(Path(srcGlobal)).*** --- (PathSet(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r))
     println(pathSet.isInstanceOf[ExclusionPathSet])
-    Path(srcGlobal).createTempDir("dir_5_")
+    Path.createTempDir(Path(srcGlobal), "dir_5_")
     pathSet.foreach((p: Path) => num+=1)
     assert(num == 5)
     flagGlobal = true
@@ -224,13 +224,9 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "15. Use slash to build PathSets with globs" in {
     val matcher = PathMatcher(srcGlobal + "*.tmp")
     val pathSet = PathSet(Path(srcGlobal)) / (srcGlobal + "*.tmp")
-    Path(srcGlobal).createTempFile("foo", ".tmp")
-    Path(srcGlobal).createTempFile("bar", ".tmp")
-    Path(srcGlobal).createTempFile("baz", ".scala")
-    val dir1 = Path(srcGlobal).createTempDir("dir1")
-    dir1.createTempFile("foo", ".tmp")
-    dir1.createTempFile("bar", ".tmp")
-    dir1.createTempFile("baz", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
+    Path.createTempFile(Path(srcGlobal), "baz", ".scala")
     var numTmps = 0
     pathSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
