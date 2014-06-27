@@ -1,6 +1,6 @@
 package com.rgm.file
 
-import java.io.{File => JFile, IOException}
+import java.io.{File => JFile, _}
 import java.net.{URI, URL}
 import java.nio.file.{Path => JPath, FileSystem => JFileSystem, _}
 import java.nio.file.AccessMode._
@@ -9,6 +9,7 @@ import scala.collection.JavaConverters._
 import java.nio.file.attribute._
 import java.util
 import scala.util
+import scala.Some
 
 
 object Path {
@@ -48,6 +49,10 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def compare(that: Path): Int = jpath.compareTo(that.jpath)
 
   //--------------------------------------------------------------------------------------------------------------------
+
+  def inputStream: InputStream = new FileInputStream(jpath.toFile)
+
+  def outputStream: OutputStream = new FileOutputStream(jpath.toFile)
 
   def fileSystem: FileSystem = FileSystem(jpath.getFileSystem)
 

@@ -7,6 +7,7 @@ import scala.collection.mutable.ListBuffer
 import scala.util.{Try, Random}
 import java.net.URI
 import java.util
+import java.io.{FileOutputStream, PrintStream}
 
 
 class FileIOSpec extends FlatSpec with FileSetupTeardown {
@@ -250,6 +251,15 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
+  it should "22. check file io stream" in {
+    val p = Path((new java.io.File( "." ).getCanonicalPath).toString + "/src/test/resources/file.tmp")///Users/sshivaprasad/Documents/src/zpath/src/main/scala/com/rgm/file/Path.scala")
+    p.deleteIfExists()
+    val ps = new java.io.PrintStream(p.outputStream)
+    ps.print("String")
+    ps.close()
+    assert(p.inputStream.read() == 83)
+    flagGlobal = true
+  }
   //setFilePerm test-> sets posix file permissions
   //  it should "19. create a file, change posix permissions, ensure they were set correctly" in {
   //    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
