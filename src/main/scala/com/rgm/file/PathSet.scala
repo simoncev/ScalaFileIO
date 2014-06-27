@@ -66,7 +66,7 @@ abstract class PathSet extends PathFinder {
 }
 
 class SimplePathSet(root: Path) extends PathSet {
-  private var memberPath: Path = root
+  var memberPath: Path = root
 
   override def foreach[U](f: Path => U) {
     f(memberPath)
