@@ -233,16 +233,23 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
 
   it should "16. Test the overriden filter method" in {
-    buildTmpFileTree
     val srcPath = PathSet(Path(srcGlobal))
     var num = 0
     val ps1 = (((srcPath ***) --- (srcPath ** PathMatcher(""".*\.tmp""".r)))) +++ ((srcPath ***) --- (srcPath ** PathMatcher(""".*dir[^\/]*""".r)))
-    ps1.filter((p: Path) => PathMatcher(""".*dir[^\/]*""".r).matches(p))
-    
-    for (p <- ps1) {
+    val filtered = ps1.filter((p: Path) => PathMatcher(""".*dir[^\/]*""".r).matches(p))
+
+    buildTmpFileTree
+    for (p <- filtered) {
       num+=1
     }
     assert(num==4)
     flagGlobal = true
+  }
+
+  it should "17. Map Path=>Path returns a PathSet" in {
+    buildTmpFileTree
+    val basePathSet = PathSet(Path(srcGlobal)) ***
+    assert(basePathSet.map((p: Path) => p / Path("foo")).isInstanceOf[PathSet])
+
   }
 }

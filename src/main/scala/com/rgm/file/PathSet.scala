@@ -67,6 +67,9 @@ abstract class PathSet extends TraversableViewLike[Path, PathSet, TraversableVie
 
   protected def underlying: PathSet = this
 
+  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[TraversableView[Path, PathSet], B, That]): That = {
+
+  }
 
 }
 

@@ -3,3 +3,4 @@ target/
 .idea/
 .idea_modules/
 src/test/resources/tmpCopy
+src/test/resources/file.tmp
