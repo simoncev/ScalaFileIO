@@ -248,7 +248,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
 
   it should "17. Map Path=>Path returns a PathSet" in {
     buildTmpFileTree
-    val basePathSet = PathSet(Path(srcGlobal)) ***
+    val basePathSet = PathSet(Path(srcGlobal)).***
     assert(basePathSet.map((p: Path) => p / Path("foo")).isInstanceOf[PathSet])
 
   }

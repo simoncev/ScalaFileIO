@@ -6,7 +6,8 @@ import java.nio.file.attribute._
 import java.io.{File => JFile, IOException}
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.Builder
-import scala.collection.{TraversableViewLike, TraversableView}
+import scala.collection.{GenTraversableOnce, TraversableViewLike, TraversableView}
+import com.rgm.file.PathSet.PathSetCanBuildFrom
 
 /**
  * Created by sshivaprasad on 6/18/14.
@@ -18,18 +19,32 @@ object PathSet {
     new SimplePathSet(paths: _*)
   }
 
-//  private class MappedPathSetBuilder[Path,PathSet](pathSet: PathSet, func: Path=> Path) extends Builder[Path,PathSet] {
-//  }
+  implicit def canBuildFrom: CanBuildFrom[PathSet, Path, PathSet] =
+    new PathSetCanBuildFrom
+
 //
-//  implicit def canBuildFrom: CanBuildFrom[PathSet, Path, PathSet] =
-//    new CanBuildFrom {
-//      def apply(pathSet: PathSet, func: Path => Path): Builder[Path,PathSet] = new MappedPathSetBuilder(pathSet, func)
-//    }
+//  protected class PathSetBuilder(pathSet: PathSet) extends Builder[Path,PathSet] {
+//    def result() = pathSet
+//    def clear() = super.clear()
+//    def +=(p: Path) = super.+=(p)
+//  }
+
+  protected class MappedPathSetBuilder(pathSet: PathSet, f: Path=>Path) extends Builder[Path,PathSet] {
+    def result() = new MappedPathSet(pathSet, f)
+    def clear() = this
+    def +=(p: Path) = this
+  }
+
+  protected class PathSetCanBuildFrom extends CanBuildFrom[PathSet, Path, PathSet] {
+      def apply(): Builder[Path,PathSet] = new MappedPathSetBuilder(new SimplePathSet, (p: Path) => p)
+      def apply(pathSet: PathSet) = new MappedPathSetBuilder(pathSet, (p: Path) => p)
+      //only one intended for use
+      def apply(pathSet: PathSet, f: Path=>Path) = new MappedPathSetBuilder(pathSet, f)
+    }
 
 }
 
-//correct generics?
-abstract class PathSet extends TraversableViewLike[Path, PathSet, TraversableView[Path, PathSet]] {
+abstract class PathSet extends Traversable[Path] {
 
   def +++(includes: PathSet): PathSet = {
     (this, includes) match {
@@ -67,9 +82,18 @@ abstract class PathSet extends TraversableViewLike[Path, PathSet, TraversableVie
 
   protected def underlying: PathSet = this
 
-  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[TraversableView[Path, PathSet], B, That]): That = {
-
+  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
+    bf match {
+      case psbf: PathSetCanBuildFrom => psbf(this, f.asInstanceOf[Path => Path]).result().asInstanceOf[That]
+      case _ => super.map(f)
+    }
   }
+//
+//  override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
+//
+//  }
+
+
 
 }
 
@@ -186,7 +210,7 @@ final class MappedPathSet(pathSet: PathSet, func: Path => Path) extends PathSet 
   }
   override def ancestorsOf(p: Path): Set[Path] = {
     var ancestorSet = Set[Path]()
-    for (candidateAncestor <- pathSet.ancestorsOf(p))
+    for (candidateAncestor <- pathSet)
       if (p startsWith func(candidateAncestor))
         ancestorSet += func(candidateAncestor)
     ancestorSet
