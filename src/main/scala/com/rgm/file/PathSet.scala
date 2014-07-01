@@ -67,11 +67,41 @@ abstract class PathSet extends Traversable[Path] {
     new FilteredPathSet(this, p)
   }
 
+//  override def withFilter(p: Path => Boolean): PathSet = {
+//    new WithFilteredPathSet(this,p)
+//  }
 //  override def map[B, That](func: Path => B)(implicit cbf: CanBuildFrom[PathSet, B, That]): That = {
 //    cbf(this, func)
 //  }
 
 }
+
+
+//final private class WithFilteredPathSet(p: PathSet, func: Path => Boolean) extends PathSet {
+//  override def foreach[U](f: Path => U) = {
+//    p.foreach((p: Path) => if (func(p)) f(p))
+//  }
+//
+//  override def ancestorsOf(i: Path): Set[Path] = {
+//    p.ancestorsOf(i)
+//  }
+//
+//  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[PathSet, Path, PathSet]): That = {
+//    val ps: PathSet = new SimplePathSet()
+//    val b = bf(this)
+//    //for (x <- this.init)
+//    p.foreach((pth: Path) => if (func(pth)) b += f(pth) )
+//    b
+//  }
+//
+//  override def withFilter(q: Path => Boolean): WithFilter = new WithFilter(x => func(x) && q(x))
+//
+//  def foreach[U](f: Path => U): Unit =
+//    for (x <- this)
+//      if (func(x)) f(x)
+//
+//
+//}
 
 final class SimplePathSet(roots: Path*) extends PathSet {
   val root: Seq[Path] = roots
@@ -128,6 +158,7 @@ final private class FilteredPathSet(p: PathSet, func: Path => Boolean) extends P
     p.ancestorsOf(i)
   }
 }
+
 final private class TreeWalkPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMatcher) extends PathSet {
 
   override def foreach[U](f: Path => U) = {
