@@ -260,23 +260,66 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
 
   it should "19. Mapping Path to a non-Path returns a non-path set of the same cardinality" in {
+    buildTmpFileTree
+    val basePathSet = PathSet(Path(srcGlobal)).***
+    val mapped = basePathSet.map((p: Path) => p.size)
+    var num = 0
+    for (p <- mapped) {
+      num+=1
+    }
+    assert(num==9)
+    assert(mapped.isInstanceOf[Traversable[Int]])
 
   }
 
   it should "20. Exclusion of mapped path sets takes into account all possible paths to a file" in {
+    buildTmpFileTree
+    val srcGlobalPath = Path(srcGlobal)
+    val superSet = PathSet(srcGlobalPath) +++ PathSet(srcGlobalPath).***
+    val mapped = PathSet(Path("bogusPath")).map(p => Path(srcGlobal))
+    val exclusion = superSet --- mapped
+    var num = 0
+    for (p <- exclusion) {
+      num+=1
+    }
+    assert(num==9)
+
 
   }
 
   it should "21. Mapped path sets are evaluated lazily if they result in a PathSet " in {
-
+    val basePathSet = PathSet(Path(srcGlobal)).***
+    val mapped = basePathSet.map((p: Path) => p / Path("foo"))
+    buildTmpFileTree
+    var num = 0
+    for (p <- mapped) {
+      num+=1
+    }
+    assert(num==9)
   }
 
   it should "22. Mapped path sets are evaluated eagerly if they map Path=>non-Path" in {
-
+    val basePathSet = PathSet(Path(srcGlobal)).***
+    val mapped = basePathSet.map((p: Path) => p.size)
+    buildTmpFileTree
+    var num = 0
+    for (p <- mapped) {
+      num+=1
+    }
+    assert(num==0)
   }
 
   it should "23. Test mapping back and forth" in {
-
+    val basePathSet = PathSet(Path(srcGlobal)).***
+    val mapped = basePathSet.map((p: Path) => p / Path("foo"))
+    val mappedBack = mapped.map((p: Path) => p.parent.get)
+    buildTmpFileTree
+    var num = 0
+    val mappedBackSeq = mappedBack.toSeq
+    val baseSeq = basePathSet.toSeq
+    for (i <- 0 until mapped.count(p => true)) {
+      assert(baseSeq(i) == mappedBackSeq(i))
+    }
   }
 
 
