@@ -5,8 +5,8 @@ import java.nio.file.{Path => JPath, FileSystem => JFileSystem, _}
 import java.nio.file.attribute._
 import java.io.{File => JFile, IOException}
 import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable.Builder
-import scala.collection.{GenTraversableOnce, TraversableViewLike, TraversableView}
+import scala.collection.mutable.{ArrayBuffer, Builder}
+import scala.collection.{TraversableLike, GenTraversableOnce, TraversableViewLike, TraversableView}
 import com.rgm.file.PathSet.PathSetCanBuildFrom
 
 /**
@@ -44,7 +44,7 @@ object PathSet {
 
 }
 
-abstract class PathSet extends Traversable[Path] {
+abstract class PathSet extends Traversable[Path] with TraversableLike[Path, PathSet] {
 
   def +++(includes: PathSet): PathSet = {
     (this, includes) match {
@@ -82,10 +82,18 @@ abstract class PathSet extends Traversable[Path] {
 
   protected def underlying: PathSet = this
 
-  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
+  override def newBuilder: Builder[Path, PathSet] = new Builder[Path, PathSet] {
+    val paths = new ArrayBuffer[Path]
+    def apply() = this
+    def +=(p: Path) = {paths.append(p); this}
+    def result: PathSet = new SimplePathSet(paths: _*)
+    def clear() = paths.clear()
+  }
+
+  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[PathSet, B, That]): That = {
     println(bf)
     bf match {
-      case psbf: PathSetCanBuildFrom => psbf(this, f.asInstanceOf[Path => Path]).result().asInstanceOf[That]
+      case psbf: PathSetCanBuildFrom => {println("HIT"); psbf(this, f.asInstanceOf[Path => Path]).result().asInstanceOf[That]}
       case _ => super.map(f)
     }
   }
@@ -94,50 +102,12 @@ abstract class PathSet extends Traversable[Path] {
     new FilteredPathSet(this, p)
   }
 
-  //
-//  override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
-//
-
-//  override def withFilter(p: Path => Boolean): PathSet = {
-//    new WithFilteredPathSet(this,p)
-//  }
-
-
-
-
 }
-
-
-//final private class WithFilteredPathSet(p: PathSet, func: Path => Boolean) extends PathSet {
-//  override def foreach[U](f: Path => U) = {
-//    p.foreach((p: Path) => if (func(p)) f(p))
-//  }
-//
-//  override def ancestorsOf(i: Path): Set[Path] = {
-//    p.ancestorsOf(i)
-//  }
-//
-//  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[PathSet, Path, PathSet]): That = {
-//    val ps: PathSet = new SimplePathSet()
-//    val b = bf(this)
-//    //for (x <- this.init)
-//    p.foreach((pth: Path) => if (func(pth)) b += f(pth) )
-//    b
-//  }
-//
-//  override def withFilter(q: Path => Boolean): WithFilter = new WithFilter(x => func(x) && q(x))
-//
-//  def foreach[U](f: Path => U): Unit =
-//    for (x <- this)
-//      if (func(x)) f(x)
-//
-//
-//}
 
 final class SimplePathSet(roots: Path*) extends PathSet {
   val root: Seq[Path] = roots
   override def foreach[U](f: Path => U) = {
-    roots.foreach((p: Path) => if (p.exists()) f(p))
+    roots.foreach((p: Path) => f(p))
   }
 
   override def ancestorsOf(i: Path) : Set[Path] = {
@@ -244,7 +214,7 @@ final class MappedPathSet(pathSet: PathSet, func: Path => Path) extends PathSet 
 
   override def foreach[U](f: Path => U) = {
     for (p <- pathSet)
-      f(p)
+      f(func(p))
   }
   override def ancestorsOf(p: Path): Set[Path] = {
     var ancestorSet = Set[Path]()

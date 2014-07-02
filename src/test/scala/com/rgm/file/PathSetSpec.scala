@@ -172,7 +172,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
-  it should "12. Touch disk when traversing a SimplePathSet" in {
+  it should "12. Should not touch disk when traversing a SimplePathSet" in {
     buildTmpFileTree
     val pathSet = PathSet(Path(srcGlobal))
     var numTmps = 0
@@ -181,7 +181,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     Path(srcGlobal).deleteRecursively()
     numTmps = 0
     pathSet.foreach((p:Path) => numTmps+=1)
-    assert(numTmps == 0)
+    assert(numTmps == 1)
   }
 
   it should "13. Exclude each different type of set correctly" in {
@@ -249,7 +249,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "17. Map Path=>Path returns a PathSet" in {
     buildTmpFileTree
     val basePathSet = PathSet(Path(srcGlobal)).***
-    val mapped: Traversable[Path] = basePathSet.map((p: Path) => p / Path("foo"))
+    val mapped = basePathSet.map((p: Path) => p / Path("foo"))
     var num = 0
     for (p <- mapped) {
       num+=1
@@ -257,6 +257,27 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     }
     assert(num==9)
     assert(mapped.isInstanceOf[PathSet])
+  }
+
+  it should "19. Mapping Path to a non-Path returns a non-path set of the same cardinality" in {
 
   }
+
+  it should "20. Exclusion of mapped path sets takes into account all possible paths to a file" in {
+
+  }
+
+  it should "21. Mapped path sets are evaluated lazily if they result in a PathSet " in {
+
+  }
+
+  it should "22. Mapped path sets are evaluated eagerly if they map Path=>non-Path" in {
+
+  }
+
+  it should "23. Test mapping back and forth" in {
+
+  }
+
+
 }
