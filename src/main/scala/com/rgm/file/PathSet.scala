@@ -83,6 +83,7 @@ abstract class PathSet extends Traversable[Path] {
   protected def underlying: PathSet = this
 
   override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
+    println(bf)
     bf match {
       case psbf: PathSetCanBuildFrom => psbf(this, f.asInstanceOf[Path => Path]).result().asInstanceOf[That]
       case _ => super.map(f)
