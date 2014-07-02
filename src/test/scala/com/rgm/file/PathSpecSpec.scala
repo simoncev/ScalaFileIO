@@ -9,9 +9,9 @@ import java.util
 import scala.language.postfixOps
 
 
-class PathSetSpec extends FlatSpec with FileSetupTeardown {
+class PathSpecSpec extends FlatSpec with FileSetupTeardown {
 
-  behavior of "PathSet"
+  behavior of "PathSpec"
 
   val allMatcher = PathMatcher(""".*""".r)
 
@@ -35,21 +35,21 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     Path.createTempFile(Path(srcGlobal), "file_5_",".tmp")
   }
 
-  it should "1. PathSet should find the current state of the file system" in {
-    val pathSet = PathSet(Path(srcGlobal)) * allMatcher
+  it should "1. PathSpec should find the current state of the file system" in {
+    val pathSpec = PathSpec(Path(srcGlobal)) * allMatcher
     val foo = Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
     Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
     Path.createTempFile(Path(srcGlobal), "baz", ".scala")
     var numTmps = 0
-    pathSet.foreach((p:Path) => numTmps+=1)
+    pathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 3)
     foo.delete()
     numTmps = 0
-    pathSet.foreach(p => numTmps += 1)
+    pathSpec.foreach(p => numTmps += 1)
     assert(numTmps == 2)
     val newFoo = Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
     numTmps = 0
-    pathSet.foreach(p => numTmps += 1)
+    pathSpec.foreach(p => numTmps += 1)
     assert(numTmps == 3)
     flagGlobal = true
   }
@@ -59,48 +59,48 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     //building testing tree
     buildTmpFileTree
     var numTmps = 0
-    (PathSet(Path(srcGlobal)) * allMatcher).foreach((p:Path) => numTmps+=1)
+    (PathSpec(Path(srcGlobal)) * allMatcher).foreach((p:Path) => numTmps+=1)
     assert(numTmps==3)
     numTmps = 0
-    (PathSet(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => numTmps+=1)
+    (PathSpec(Path(srcGlobal)) * allMatcher * allMatcher).foreach((p:Path) => numTmps+=1)
     assert(numTmps==4)
     flagGlobal = true
   }
 
-  it should "3. PathSet should apply its filter to the elements it finds" in {
+  it should "3. PathSpec should apply its filter to the elements it finds" in {
     val matcher = PathMatcher(".*.tmp".r)
-    val pathSet = PathSet(Path(srcGlobal)) * matcher
+    val pathSpec = PathSpec(Path(srcGlobal)) * matcher
     Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
     Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
     Path.createTempFile(Path(srcGlobal), "baz", ".scala")
     var numTmps = 0
-    pathSet.foreach((p:Path) => numTmps+=1)
+    pathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
     flagGlobal = true
   }
 
   it should "4. test *" in {
     buildTmpFileTree
-    val pathSet = PathSet(Path(srcGlobal))
+    val pathSpec = PathSpec(Path(srcGlobal))
     var num = 0
-    (pathSet * """.*""".r).foreach((p: Path) => num+=1)
+    (pathSpec * """.*""".r).foreach((p: Path) => num+=1)
     assert(num==3)
     flagGlobal = true
   }
 
   it should "5. Does not match root on searches of children" in {
-    val pathSet = PathSet(Path.createTempDir(Path(srcGlobal), "file_1_")) * allMatcher
+    val pathSpec = PathSpec(Path.createTempDir(Path(srcGlobal), "file_1_")) * allMatcher
     var numFound = 0
-    pathSet.foreach((p: Path) => numFound += 1)
+    pathSpec.foreach((p: Path) => numFound += 1)
     assert(numFound == 0)
     flagGlobal = true
   }
 
   it should "6. test *** function" in {
     buildTmpFileTree
-    val pathSet = PathSet(Path(srcGlobal))
+    val pathSpec = PathSpec(Path(srcGlobal))
     var num = 0
-    (pathSet.***).foreach((p: Path) => num+=1)
+    (pathSpec.***).foreach((p: Path) => num+=1)
     assert(num==9)
     flagGlobal = true
   }
@@ -109,8 +109,8 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "7. simple test union function" in {
     buildTmpFileTree
     var num = 0
-    val pathSet = ((PathSet(Path(srcGlobal)) ** (""".*dir[^\/]*""".r,10)) +++ (PathSet(Path(srcGlobal)) ** (""".*\.tmp""".r,10)))
-    pathSet.foreach((p: Path) => num+=1)
+    val pathSpec = ((PathSpec(Path(srcGlobal)) ** (""".*dir[^\/]*""".r,10)) +++ (PathSpec(Path(srcGlobal)) ** (""".*\.tmp""".r,10)))
+    pathSpec.foreach((p: Path) => num+=1)
     assert(num == 9)
 
     flagGlobal = true
@@ -118,7 +118,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
 
   it should "8. Apply filters built of globs to the elements it finds" in {
     val matcher = PathMatcher(srcGlobal + "*.tmp")
-    val pathSet = PathSet(Path(srcGlobal)) * matcher
+    val pathSpec = PathSpec(Path(srcGlobal)) * matcher
     Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
     Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
     Path.createTempFile(Path(srcGlobal), "baz", ".scala")
@@ -127,12 +127,12 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     Path.createTempFile(dir1, "bar", ".tmp")
     Path.createTempFile(dir1, "baz", ".tmp")
     var numTmps = 0
-    pathSet.foreach((p:Path) => numTmps+=1)
+    pathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
 
     numTmps = 0
-    val pathSetAllDepths = PathSet(Path(srcGlobal)) ** matcher
-    pathSetAllDepths.foreach((p:Path) => numTmps+=1)
+    val pathSpecAllDepths = PathSpec(Path(srcGlobal)) ** matcher
+    pathSpecAllDepths.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
 
     flagGlobal = true
@@ -140,7 +140,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
 
   it should "9. Chain several filters together to cherrypick a file" in {
     buildTmpFileTree
-    val rootSet = PathSet(Path(srcGlobal))
+    val rootSet = PathSpec(Path(srcGlobal))
     val complexSet = rootSet +++ (rootSet ** PathMatcher(""".*dir[^\/]*""".r)) +++ (rootSet * allMatcher * PathMatcher(".*file.*".r))
     var numTmps = 0
     complexSet.foreach((p:Path) => numTmps+=1)
@@ -153,8 +153,8 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
 
   it should "10. Duplicate files which are in the intersection of two sets being unioned" in {
     buildTmpFileTree
-    val allSet = PathSet(Path(srcGlobal)).***
-    val children = PathSet(Path(srcGlobal)) * allMatcher
+    val allSet = PathSpec(Path(srcGlobal)).***
+    val children = PathSpec(Path(srcGlobal)) * allMatcher
     val union = allSet +++ children
     var numTmps = 0
     union.foreach((p:Path) => numTmps+=1)
@@ -164,77 +164,77 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "11. exlcudes & up to date system test" in {
     buildTmpFileTree
     var num = 0
-    val pathSet = PathSet(Path(srcGlobal)).*** --- (PathSet(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r))
-    println(pathSet.isInstanceOf[ExclusionPathSet])
+    val pathSpec = PathSpec(Path(srcGlobal)).*** --- (PathSpec(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r))
+    println(pathSpec.isInstanceOf[ExclusionPathSpec])
     Path.createTempDir(Path(srcGlobal), "dir_5_")
-    pathSet.foreach((p: Path) => num+=1)
+    pathSpec.foreach((p: Path) => num+=1)
     assert(num == 5)
     flagGlobal = true
   }
 
-  it should "12. Should not touch disk when traversing a SimplePathSet" in {
+  it should "12. Should not touch disk when traversing a SimplePathSpec" in {
     buildTmpFileTree
-    val pathSet = PathSet(Path(srcGlobal))
+    val pathSpec = PathSpec(Path(srcGlobal))
     var numTmps = 0
-    pathSet.foreach((p:Path) => numTmps+=1)
+    pathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 1)
     Path(srcGlobal).deleteRecursively()
     numTmps = 0
-    pathSet.foreach((p:Path) => numTmps+=1)
+    pathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 1)
   }
 
   it should "13. Exclude each different type of set correctly" in {
     buildTmpFileTree
-    val allSet = PathSet(Path(srcGlobal)).*** +++ PathSet(Path(srcGlobal))
+    val allSet = PathSpec(Path(srcGlobal)).*** +++ PathSpec(Path(srcGlobal))
     var numTmps = 0
     allSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 10)
-    val noSimplePathSet = allSet --- PathSet(Path(srcGlobal))
+    val noSimplePathSpec = allSet --- PathSpec(Path(srcGlobal))
     numTmps = 0
-    noSimplePathSet.foreach((p:Path) => numTmps+=1)
+    noSimplePathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 9)
-    val noFilteredPathSet = allSet --- (PathSet(Path(srcGlobal)) * allMatcher)
+    val noFilteredPathSpec = allSet --- (PathSpec(Path(srcGlobal)) * allMatcher)
     numTmps = 0
-    noFilteredPathSet.foreach((p:Path) => numTmps+=1)
+    noFilteredPathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 7)
-    val nestedExclude = allSet --- noFilteredPathSet
+    val nestedExclude = allSet --- noFilteredPathSpec
     numTmps = 0
     nestedExclude.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 3)
-    val noCompoundPathSet = allSet --- (PathSet(Path(srcGlobal)) +++ nestedExclude)
+    val noCompoundPathSpec = allSet --- (PathSpec(Path(srcGlobal)) +++ nestedExclude)
     numTmps = 0
-    noCompoundPathSet.foreach((p:Path) => numTmps+=1)
+    noCompoundPathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 6)
 
   }
 
   it should "14. test a very intricate set of +++, *, **, ***, and ---" in {
     buildTmpFileTree
-    val srcPath = PathSet(Path(srcGlobal))
+    val srcPath = PathSpec(Path(srcGlobal))
     var num = 0
     val ps1 = ((((srcPath ***) --- (srcPath ** PathMatcher(""".*\.tmp""".r)))) +++ ((srcPath ***) --- (srcPath ** PathMatcher(""".*dir[^\/]*""".r)))) +++ srcPath
-    val pathSet = ps1 --- (ps1 * PathMatcher(""".*\.tmp""".r))
-    pathSet.foreach((p: Path) => num +=1)
+    val pathSpec = ps1 --- (ps1 * PathMatcher(""".*\.tmp""".r))
+    pathSpec.foreach((p: Path) => num +=1)
     assert(num==5)
     flagGlobal = true
   }
 
 
-  it should "15. Use slash to build PathSets with globs" in {
+  it should "15. Use slash to build PathSpecs with globs" in {
     val matcher = PathMatcher(srcGlobal + "*.tmp")
-    val pathSet = PathSet(Path(srcGlobal)) / (srcGlobal + "*.tmp")
+    val pathSpec = PathSpec(Path(srcGlobal)) / (srcGlobal + "*.tmp")
     Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
     Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
     Path.createTempFile(Path(srcGlobal), "baz", ".scala")
     var numTmps = 0
-    pathSet.foreach((p:Path) => numTmps+=1)
+    pathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
   }
 
   it should "16. Test the overriden filter method" in {
     buildTmpFileTree
-    val srcPath = PathSet(Path(srcGlobal))
+    val srcPath = PathSpec(Path(srcGlobal))
     var num = 0
     val ps1 = (((srcPath ***) --- (srcPath ** PathMatcher(""".*\.tmp""".r)))) +++ ((srcPath ***) --- (srcPath ** PathMatcher(""".*dir[^\/]*""".r)))
     val filtered = ps1.filter((p: Path) => PathMatcher(""".*dir[^\/]*""".r).matches(p))
@@ -242,27 +242,27 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==4)
-    assert(filtered.isInstanceOf[PathSet])
+    assert(filtered.isInstanceOf[PathSpec])
     flagGlobal = true
   }
 
-  it should "17. Map Path=>Path returns a PathSet" in {
+  it should "17. Map Path=>Path returns a PathSpec" in {
     buildTmpFileTree
-    val basePathSet = PathSet(Path(srcGlobal)).***
-    val mapped = basePathSet.map((p: Path) => p / Path("foo"))
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val mapped = basePathSpec.map((p: Path) => p / Path("foo"))
     var num = 0
     for (p <- mapped) {
       num+=1
       assert(p endsWith "foo")
     }
     assert(num==9)
-    assert(mapped.isInstanceOf[PathSet])
+    assert(mapped.isInstanceOf[PathSpec])
   }
 
   it should "19. Mapping Path to a non-Path returns a non-path set of the same cardinality" in {
     buildTmpFileTree
-    val basePathSet = PathSet(Path(srcGlobal)).***
-    val mapped = basePathSet.map((p: Path) => p.size)
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val mapped = basePathSpec.map((p: Path) => p.size)
     var num = 0
     for (p <- mapped) {
       num+=1
@@ -275,8 +275,8 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   it should "20. Exclusion of mapped path sets takes into account all possible paths to a file" in {
     buildTmpFileTree
     val srcGlobalPath = Path(srcGlobal)
-    val superSet = PathSet(srcGlobalPath) +++ PathSet(srcGlobalPath).***
-    val mapped = PathSet(Path("bogusPath")).map(p => Path(srcGlobal))
+    val superSet = PathSpec(srcGlobalPath) +++ PathSpec(srcGlobalPath).***
+    val mapped = PathSpec(Path("bogusPath")).map(p => Path(srcGlobal))
     val exclusion = superSet --- mapped
     var num = 0
     for (p <- exclusion) {
@@ -287,9 +287,9 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
 
   }
 
-  it should "21. Mapped path sets are evaluated lazily if they result in a PathSet " in {
-    val basePathSet = PathSet(Path(srcGlobal)).***
-    val mapped = basePathSet.map((p: Path) => p / Path("foo"))
+  it should "21. Mapped path sets are evaluated lazily if they result in a PathSpec " in {
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val mapped = basePathSpec.map((p: Path) => p / Path("foo"))
     buildTmpFileTree
     var num = 0
     for (p <- mapped) {
@@ -299,8 +299,8 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
 
   it should "22. Mapped path sets are evaluated eagerly if they map Path=>non-Path" in {
-    val basePathSet = PathSet(Path(srcGlobal)).***
-    val mapped = basePathSet.map((p: Path) => p.size)
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val mapped = basePathSpec.map((p: Path) => p.size)
     buildTmpFileTree
     var num = 0
     for (p <- mapped) {
@@ -310,17 +310,17 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
   }
 
   it should "23. Test mapping back and forth" in {
-    val basePathSet = PathSet(Path(srcGlobal)).***
-    val mapped = basePathSet.map((p: Path) => p / Path("foo"))
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val mapped = basePathSpec.map((p: Path) => p / Path("foo"))
     val mappedBack = mapped.map((p: Path) => p.parent.get)
     buildTmpFileTree
     var num = 0
     val mappedBackSeq = mappedBack.toSeq
-    val baseSeq = basePathSet.toSeq
+    val baseSeq = basePathSpec.toSeq
     for (i <- 0 until mapped.count(p => true)) {
       assert(baseSeq(i) == mappedBackSeq(i))
     }
   }
 
-
+  it should "24. "
 }
