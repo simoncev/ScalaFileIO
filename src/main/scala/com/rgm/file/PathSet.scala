@@ -19,7 +19,7 @@ object PathSet {
     new SimplePathSet(paths: _*)
   }
 
-  implicit def canBuildFrom: CanBuildFrom[PathSet, Path, PathSet] =
+  implicit def canBuildFrom: CanBuildFrom[Traversable[Path], Path, PathSet] =
     new PathSetCanBuildFrom
 
 //
@@ -35,9 +35,9 @@ object PathSet {
     def +=(p: Path) = this
   }
 
-  protected class PathSetCanBuildFrom extends CanBuildFrom[PathSet, Path, PathSet] {
+  protected class PathSetCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSet] {
       def apply(): Builder[Path,PathSet] = new MappedPathSetBuilder(new SimplePathSet, (p: Path) => p)
-      def apply(pathSet: PathSet) = new MappedPathSetBuilder(pathSet, (p: Path) => p)
+      def apply(pathSet: Traversable[Path]) = new MappedPathSetBuilder(pathSet.asInstanceOf[PathSet], (p: Path) => p)
       //only one intended for use
       def apply(pathSet: PathSet, f: Path=>Path) = new MappedPathSetBuilder(pathSet, f)
     }
@@ -88,7 +88,12 @@ abstract class PathSet extends Traversable[Path] {
       case _ => super.map(f)
     }
   }
-//
+
+  override def filter(p: Path => Boolean): PathSet = {
+    new FilteredPathSet(this, p)
+  }
+
+  //
 //  override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
 //
 
