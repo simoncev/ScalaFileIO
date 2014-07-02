@@ -165,7 +165,7 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     buildTmpFileTree
     var num = 0
     val pathSet = PathSet(Path(srcGlobal)).*** --- (PathSet(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r))
-    println(pathSet.isInstanceOf[ExclusionPathSet])
+    //println(pathSet.isInstanceOf[ExclusionPathSet])
     Path.createTempDir(Path(srcGlobal), "dir_5_")
     pathSet.foreach((p: Path) => num+=1)
     assert(num == 5)
@@ -246,17 +246,28 @@ class PathSetSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
-  it should "17. Map Path=>Path returns a PathSet" in {
-    buildTmpFileTree
-    val basePathSet = PathSet(Path(srcGlobal)).***
-    val mapped: Traversable[Path] = basePathSet.map((p: Path) => p / Path("foo"))
-    var num = 0
-    for (p <- mapped) {
-      num+=1
-      assert(p endsWith "foo")
-    }
-    assert(num==9)
-    assert(mapped.isInstanceOf[PathSet])
+//  it should "17. Map Path=>Path returns a PathSet" in {
+//    buildTmpFileTree
+//    val basePathSet = PathSet(Path(srcGlobal)).***
+//    val mapped: Traversable[Path] = basePathSet.map((p: Path) => p / Path("foo"))
+//    var num = 0
+//    for (p <- mapped) {
+//      num+=1
+//      assert(p endsWith "foo")
+//    }
+//    assert(num==9)
+//    assert(mapped.isInstanceOf[PathSet])
+//  }
 
+  it should "18.test the laziness of filter and withFilter" in {
+    buildTmpFileTree
+    val srcPath = (PathSet(Path(srcGlobal)) ***)
+    val fltr = srcPath.withFilter((p: Path) => PathMatcher(""".*dir[^\/]*""".r).matches(p))
+    var num1 = 0
+    var num2 = 0
+    fltr.foreach((p: Path) => num1+=1)
+    Path.createTempDir(Path(srcGlobal), "dir_9_")
+    fltr.foreach((p: Path) => num2+=1)
+    assert(num1==4 && num2==5)
   }
 }

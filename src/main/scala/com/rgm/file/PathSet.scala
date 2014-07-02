@@ -29,18 +29,19 @@ object PathSet {
 //    def +=(p: Path) = super.+=(p)
 //  }
 
-  protected class MappedPathSetBuilder(pathSet: PathSet, f: Path=>Path) extends Builder[Path,PathSet] {
+   protected class MappedPathSetBuilder(pathSet: PathSet, f: Path=>Path) extends Builder[Path,PathSet] {
     def result() = new MappedPathSet(pathSet, f)
     def clear() = this
     def +=(p: Path) = this
   }
 
-  protected class PathSetCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSet] {
+   protected class PathSetCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSet] {
       def apply(): Builder[Path,PathSet] = new MappedPathSetBuilder(new SimplePathSet, (p: Path) => p)
       def apply(pathSet: Traversable[Path]) = new MappedPathSetBuilder(pathSet.asInstanceOf[PathSet], (p: Path) => p)
       //only one intended for use
       def apply(pathSet: PathSet, f: Path=>Path) = new MappedPathSetBuilder(pathSet, f)
-    }
+  }
+
 
 }
 
@@ -97,41 +98,12 @@ abstract class PathSet extends Traversable[Path] {
 //  override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
 //
 
-//  override def withFilter(p: Path => Boolean): PathSet = {
-//    new WithFilteredPathSet(this,p)
-//  }
-
-
-
+  override def withFilter(p: Path => Boolean): PathSet = {
+    new FilteredPathSet(this,p)
+  }
 
 }
 
-
-//final private class WithFilteredPathSet(p: PathSet, func: Path => Boolean) extends PathSet {
-//  override def foreach[U](f: Path => U) = {
-//    p.foreach((p: Path) => if (func(p)) f(p))
-//  }
-//
-//  override def ancestorsOf(i: Path): Set[Path] = {
-//    p.ancestorsOf(i)
-//  }
-//
-//  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[PathSet, Path, PathSet]): That = {
-//    val ps: PathSet = new SimplePathSet()
-//    val b = bf(this)
-//    //for (x <- this.init)
-//    p.foreach((pth: Path) => if (func(pth)) b += f(pth) )
-//    b
-//  }
-//
-//  override def withFilter(q: Path => Boolean): WithFilter = new WithFilter(x => func(x) && q(x))
-//
-//  def foreach[U](f: Path => U): Unit =
-//    for (x <- this)
-//      if (func(x)) f(x)
-//
-//
-//}
 
 final class SimplePathSet(roots: Path*) extends PathSet {
   val root: Seq[Path] = roots
