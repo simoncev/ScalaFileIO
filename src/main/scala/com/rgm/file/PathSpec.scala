@@ -22,8 +22,10 @@ object PathSpec {
   implicit def canBuildFrom: CanBuildFrom[Traversable[Path], Path, PathSpec] =
     new PathSpecCanBuildFrom
 
-  protected class FlatMapSpecBuilder(pathSpec: PathSpec, f: Path => GenTraversableOnce[Path]) extends Builder[Path,PathSpec] {
-    def result() = new FlatMapPathSpec(pathSpec, f)
+  /*FlatMapPathSpecBuilder not intended to be used as an accumulator, merely as a vessel for creating a
+   * FlatMapPathSpec from PATHSPEC and F*/
+  protected class FlatMapSpecBuilder(pathSpec: PathSpec, func: Path => GenTraversableOnce[Path]) extends Builder[Path,PathSpec] {
+    def result() = new FlatMapPathSpec(pathSpec, func)
     def clear() = Unit
     def +=(p: Path) = this
 }
@@ -41,11 +43,8 @@ object PathSpec {
       def apply(pathSpec: Traversable[Path]) = new MappedPathSpecBuilder(pathSpec.asInstanceOf[PathSpec], (p: Path) => p)
       //only one intended for use
       def apply(pathSpec: PathSpec, f: Path=>Path) = new MappedPathSpecBuilder(pathSpec, f)
-      def apply(pathSpec: PathSpec, f: Path => GenTraversableOnce[Path]) = new FlatMapSpecBuilder(pathSpec, f)
+      def apply(pathSpec: PathSpec, func: Path => GenTraversableOnce[Path]) = new FlatMapSpecBuilder(pathSpec, func)
   }
-
-
-
 }
 
 abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, PathSpec] {
