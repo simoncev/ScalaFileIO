@@ -7,6 +7,10 @@ import scala.util.{Try, Random}
 import java.net.URI
 import java.util
 import scala.language.postfixOps
+import org.scalacheck.Prop._
+import org.scalacheck._
+import com.rgm.file.Generators._
+
 
 
 class PathSpecSpec extends FlatSpec with FileSetupTeardown {
@@ -451,5 +455,12 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     }
     assert(num==0)
   }
+}
+
+object PathSpecSpec extends Properties("PathSpec") {
+
+  //implicit conversion
+  property("paths convert to PathSpecs") =
+    forAll{ (p: Path) =>  p.***.isInstanceOf[PathSpec]}
 
 }

@@ -26,7 +26,7 @@ object Path {
 //  implicit def fromJFile(jfile: JFile): Path = apply(jfile)
 //  implicit def fromString(path: String): Path = apply(path)
 
-//  implicit def toFinder(path: Path): PathFinder = ???
+  implicit def toSpec(path: Path): PathSpec = PathSpec(path)
 
   //createTempFile
   def createTempFile(dir: Path, prefix: String, suffix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempFile(dir.jpath,prefix, suffix, attrs:_*))
