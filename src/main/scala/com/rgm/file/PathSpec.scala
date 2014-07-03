@@ -7,113 +7,111 @@ import java.io.{File => JFile, IOException}
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.{ArrayBuffer, Builder}
 import scala.collection.{TraversableLike, GenTraversableOnce, TraversableViewLike, TraversableView}
-import com.rgm.file.PathSet.PathSetCanBuildFrom
+import com.rgm.file.PathSpec.PathSpecCanBuildFrom
 
 /**
  * Created by sshivaprasad on 6/18/14.
  */
 
-object PathSet {
+object PathSpec {
 
-  def apply(paths: Path*): PathSet = {
-    new SimplePathSet(paths: _*)
+  def apply(paths: Path*): PathSpec = {
+    new SimplePathSpec(paths: _*)
   }
 
-  implicit def canBuildFrom: CanBuildFrom[Traversable[Path], Path, PathSet] =
-    new PathSetCanBuildFrom
+  implicit def canBuildFrom: CanBuildFrom[Traversable[Path], Path, PathSpec] =
+    new PathSpecCanBuildFrom
 
 //
-//  protected class PathSetBuilder(pathSet: PathSet) extends Builder[Path,PathSet] {
-//    def result() = pathSet
+//  protected class PathSpecBuilder(pathSpec: PathSpec) extends Builder[Path,PathSpec] {
+//    def result() = pathSpec
 //    def clear() = super.clear()
 //    def +=(p: Path) = super.+=(p)
 //  }
 
-   protected class MappedPathSetBuilder(pathSet: PathSet, f: Path=>Path) extends Builder[Path,PathSet] {
-    def result() = new MappedPathSet(pathSet, f)
+  protected class MappedPathSpecBuilder(pathSpec: PathSpec, f: Path=>Path) extends Builder[Path,PathSpec] {
+    def result() = new MappedPathSpec(pathSpec, f)
     def clear() = this
     def +=(p: Path) = this
   }
 
-   protected class PathSetCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSet] {
-      def apply(): Builder[Path,PathSet] = new MappedPathSetBuilder(new SimplePathSet, (p: Path) => p)
-      def apply(pathSet: Traversable[Path]) = new MappedPathSetBuilder(pathSet.asInstanceOf[PathSet], (p: Path) => p)
+  protected class PathSpecCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSpec] {
+      def apply(): Builder[Path,PathSpec] = new MappedPathSpecBuilder(new SimplePathSpec, (p: Path) => p)
+      def apply(pathSpec: Traversable[Path]) = new MappedPathSpecBuilder(pathSpec.asInstanceOf[PathSpec], (p: Path) => p)
       //only one intended for use
-      def apply(pathSet: PathSet, f: Path=>Path) = new MappedPathSetBuilder(pathSet, f)
-  }
-
+      def apply(pathSpec: PathSpec, f: Path=>Path) = new MappedPathSpecBuilder(pathSpec, f)
+    }
 
 }
 
-abstract class PathSet extends Traversable[Path] with TraversableLike[Path, PathSet] {
+abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, PathSpec] {
 
-  def +++(includes: PathSet): PathSet = {
+  def +++(includes: PathSpec): PathSpec = {
     (this, includes) match {
-      case (xThis: SimplePathSet, xIncludes: SimplePathSet) => {
-        new SimplePathSet((xThis.root ++ xIncludes.root): _*)
+      case (xThis: SimplePathSpec, xIncludes: SimplePathSpec) => {
+        new SimplePathSpec((xThis.root ++ xIncludes.root): _*)
       }
-      case (xThis: CompoundPathSet, xIncludes: CompoundPathSet) => {
-        new CompoundPathSet((xThis.pathSetSeq ++ xIncludes.pathSetSeq): _*)
+      case (xThis: CompoundPathSpec, xIncludes: CompoundPathSpec) => {
+        new CompoundPathSpec((xThis.pathSpecSeq ++ xIncludes.pathSpecSeq): _*)
       }
-      case (xThis: PathSet, xIncludes: CompoundPathSet) => {
-        new CompoundPathSet((Seq(xThis) ++ xIncludes.pathSetSeq): _*)
+      case (xThis: PathSpec, xIncludes: CompoundPathSpec) => {
+        new CompoundPathSpec((Seq(xThis) ++ xIncludes.pathSpecSeq): _*)
       }
-      case (xThis: CompoundPathSet, xIncludes: PathSet) => {
-        new CompoundPathSet((xThis.pathSetSeq ++ Seq(xIncludes)): _*)
+      case (xThis: CompoundPathSpec, xIncludes: PathSpec) => {
+        new CompoundPathSpec((xThis.pathSpecSeq ++ Seq(xIncludes)): _*)
       }
-      case (xThis: PathSet, xIncludes: PathSet) => {
-        new CompoundPathSet(Seq(xThis) ++ Seq(xIncludes): _*)
+      case (xThis: PathSpec, xIncludes: PathSpec) => {
+        new CompoundPathSpec(Seq(xThis) ++ Seq(xIncludes): _*)
       }
     }
   }
 
-  def ---(excludes: PathSet): PathSet = new ExclusionPathSet(this, excludes)
+  def ---(excludes: PathSpec): PathSpec = new ExclusionPathSpec(this, excludes)
 
-  def *(matcher: PathMatcher): PathSet = new TreeWalkPathSet(this, 1, matcher)
+  def *(matcher: PathMatcher): PathSpec = new TreeWalkPathSpec(this, 1, matcher)
 
-  def **(matcher: PathMatcher): PathSet = new TreeWalkPathSet(this, Int.MaxValue, matcher)
+  def **(matcher: PathMatcher): PathSpec = new TreeWalkPathSpec(this, Int.MaxValue, matcher)
 
-  def **(matcher: PathMatcher, d: Int): PathSet = new TreeWalkPathSet(this, d, matcher)
+  def **(matcher: PathMatcher, d: Int): PathSpec = new TreeWalkPathSpec(this, d, matcher)
 
-  def *** : PathSet = this **(PathMatcher( """.*""".r), Int.MaxValue)
+  def *** : PathSpec = this **(PathMatcher( """.*""".r), Int.MaxValue)
 
-  def /(literal: String): PathSet = this **(PathMatcher(literal), 1)
+  def /(literal: String): PathSpec = this **(PathMatcher(literal), 1)
 
   def ancestorsOf(p: Path): Set[Path]
 
-  protected def underlying: PathSet = this
+  protected def underlying: PathSpec = this
 
-  override def newBuilder: Builder[Path, PathSet] = new Builder[Path, PathSet] {
+  override def newBuilder: Builder[Path, PathSpec] = new Builder[Path, PathSpec] {
     val paths = new ArrayBuffer[Path]
     def apply() = this
     def +=(p: Path) = {paths.append(p); this}
-    def result: PathSet = new SimplePathSet(paths: _*)
+    def result: PathSpec = new SimplePathSpec(paths: _*)
     def clear() = paths.clear()
   }
 
-  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[PathSet, B, That]): That = {
-    println(bf)
+  override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[PathSpec, B, That]): That = {
     bf match {
-      case psbf: PathSetCanBuildFrom => psbf(this, f.asInstanceOf[Path => Path]).result().asInstanceOf[That]
+      case psbf: PathSpecCanBuildFrom => psbf(this, f.asInstanceOf[Path => Path]).result().asInstanceOf[That]
       case _ => super.map(f)
     }
   }
 
-  override def filter(p: Path => Boolean): PathSet = {
-    new FilteredPathSet(this, p)
+  override def filter(p: Path => Boolean): PathSpec = {
+    new FilteredPathSpec(this, p)
   }
 
   //
 //  override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
 //
 
-  override def withFilter(p: Path => Boolean): PathSet = {
-    new FilteredPathSet(this,p)
+  override def withFilter(p: Path => Boolean): PathSpec = {
+    new FilteredPathSpec(this,p)
   }
 
 }
 
-final class SimplePathSet(roots: Path*) extends PathSet {
+final class SimplePathSpec(roots: Path*) extends PathSpec {
   val root: Seq[Path] = roots
   override def foreach[U](f: Path => U) = {
     roots.foreach((p: Path) => f(p))
@@ -129,24 +127,24 @@ final class SimplePathSet(roots: Path*) extends PathSet {
   }
 }
 
-final private class CompoundPathSet(pathSets: PathSet*) extends PathSet {
+final private class CompoundPathSpec(pathSpecs: PathSpec*) extends PathSpec {
 
-  val pathSetSeq: Seq[PathSet] = pathSets
+  val pathSpecSeq: Seq[PathSpec] = pathSpecs
 
   override def foreach[U](f: Path => U) = {
-    for (i <- pathSetSeq) i.foreach(f)
+    for (i <- pathSpecSeq) i.foreach(f)
   }
 
   override def ancestorsOf(p: Path): Set[Path] = {
     var ancestorSet = Set[Path]()
-    for (pathSet <- pathSetSeq) {
-      ancestorSet = ancestorSet ++ pathSet.ancestorsOf(p)
+    for (pathSpec <- pathSpecSeq) {
+      ancestorSet = ancestorSet ++ pathSpec.ancestorsOf(p)
     }
     ancestorSet
   }
 }
 
-final private class ExclusionPathSet(superset: PathSet, excluded: PathSet) extends PathSet {
+final private class ExclusionPathSpec(superset: PathSpec, excluded: PathSpec) extends PathSpec {
 
   override def foreach[U](f: Path => U) = {
     superset.foreach((p: Path) => if (!excluded.ancestorsOf(p).contains(p)) f(p))
@@ -159,7 +157,7 @@ final private class ExclusionPathSet(superset: PathSet, excluded: PathSet) exten
   }
 }
 
-final private class FilteredPathSet(p: PathSet, func: Path => Boolean) extends PathSet {
+final private class FilteredPathSpec(p: PathSpec, func: Path => Boolean) extends PathSpec {
   override def foreach[U](f: Path => U) = {
     p.foreach((p: Path) => if(func(p)) f(p))
   }
@@ -169,11 +167,11 @@ final private class FilteredPathSet(p: PathSet, func: Path => Boolean) extends P
   }
 }
 
-final private class TreeWalkPathSet(memberPathSet: PathSet, depth: Int, matcher: PathMatcher) extends PathSet {
+final private class TreeWalkPathSpec(memberPathSpec: PathSpec, depth: Int, matcher: PathMatcher) extends PathSpec {
 
   override def foreach[U](f: Path => U) = {
     var d: Int = depth
-    for (root <- memberPathSet) {
+    for (root <- memberPathSpec) {
       if (root.exists()) {
         Files.walkFileTree(root.jpath,
           new SimpleFileVisitor[JPath] {
@@ -202,7 +200,7 @@ final private class TreeWalkPathSet(memberPathSet: PathSet, depth: Int, matcher:
   }
 
   override def ancestorsOf(p: Path): Set[Path] = {
-    val ancestorRoots = memberPathSet.ancestorsOf(p)
+    val ancestorRoots = memberPathSpec.ancestorsOf(p)
     var ancestorSet = Set[Path]()
     for (root <- ancestorRoots) {
       if (p startsWith root) {
@@ -219,15 +217,15 @@ final private class TreeWalkPathSet(memberPathSet: PathSet, depth: Int, matcher:
   }
 }
 
-final class MappedPathSet(pathSet: PathSet, func: Path => Path) extends PathSet {
+final class MappedPathSpec(pathSpec: PathSpec, func: Path => Path) extends PathSpec {
 
   override def foreach[U](f: Path => U) = {
-    for (p <- pathSet)
+    for (p <- pathSpec)
       f(func(p))
   }
   override def ancestorsOf(p: Path): Set[Path] = {
     var ancestorSet = Set[Path]()
-    for (candidateAncestor <- pathSet)
+    for (candidateAncestor <- pathSpec)
       if (p startsWith func(candidateAncestor))
         ancestorSet += func(candidateAncestor)
     ancestorSet
