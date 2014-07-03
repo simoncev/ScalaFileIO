@@ -28,6 +28,11 @@ object PathSpec {
 //    def clear() = super.clear()
 //    def +=(p: Path) = super.+=(p)
 //  }
+  protected class FlatMapSpecBuilder(pathSpec: PathSpec, f: Path => GenTraversableOnce) extends Builder[Path,PathSpec] {
+    def result() = new FlatMapPathSpec(pathSpec, f)
+    def clear() = this
+    def +=(p: Path) = this
+}
 
   protected class MappedPathSpecBuilder(pathSpec: PathSpec, f: Path=>Path) extends Builder[Path,PathSpec] {
     def result() = new MappedPathSpec(pathSpec, f)
@@ -40,7 +45,10 @@ object PathSpec {
       def apply(pathSpec: Traversable[Path]) = new MappedPathSpecBuilder(pathSpec.asInstanceOf[PathSpec], (p: Path) => p)
       //only one intended for use
       def apply(pathSpec: PathSpec, f: Path=>Path) = new MappedPathSpecBuilder(pathSpec, f)
-    }
+      def apply(pathSpec: PathSpec, f: Path => GenTraversableOnce) = new FlatMapSpecBuilder(pathSpec, f)
+  }
+
+
 
 }
 
@@ -104,12 +112,36 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
   //
 //  override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
 //
+  override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[PathSpec, B, That]): That = {
+    bf match {
+      case _ => super.flatMap(f)
+      case psbf: PathSpecCanBuildFrom => psbf(this, f.asInstanceOf[Path => GenTraversableOnce]).result().asInstanceOf[That]
+    }
+  }
 
   override def withFilter(p: Path => Boolean): PathSpec = {
     new FilteredPathSpec(this,p)
   }
 
 }
+
+final class FlatMapPathSpec(pathSpec: PathSpec, func: Path => GenTraversableOnce) extends PathSpec {
+  override def foreach[U](f: Path => U) = {
+    for(p <- pathSpec)
+      for(q <- f(p))
+        func(q)
+  }
+
+  override def ancestorsOf(p: Path): Set[Path] = {
+    var ancestorSet = Set[Path]()
+    for (candidateAncestor <- pathSpec)
+      if (p startsWith Path(func(Path(candidateAncestor.toString)).toString) )
+        ancestorSet += Path(func(Path(candidateAncestor.toString)).toString)
+    ancestorSet
+  }
+}
+
+
 
 final class SimplePathSpec(roots: Path*) extends PathSpec {
   val root: Seq[Path] = roots
