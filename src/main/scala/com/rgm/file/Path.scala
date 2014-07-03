@@ -189,33 +189,43 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   //--------------------------------------------------------------------------------------------------------------------
 
+  /** Returns the jpath after making it a real path */
   def toRealPath(options: LinkOption*): Path = Path(jpath.toRealPath(options : _*))
 
+  /** Returns true if the jpath exists */
   def exists(options: LinkOption*): Boolean = Files.exists(jpath,options:_*)
 
+  /** Returns true if the jpath does not exist */
   def nonExistent(options: LinkOption*): Boolean = Files.notExists(jpath,options:_*)
 
+  /** Returns true if the jpath is the same as the argument path */
   def isSame(other: Path): Boolean = normalize == other.normalize
 
+  /** Returns the size of the file pointed to by jpath */
   def size(): Option[Long] = Option(Files.size(jpath))
 
+  /** Returns true if the jpath is a directory */
   def isDirectory(): Boolean = Files.isDirectory(jpath)
 
+  /** Returns true if the jpath is a file */
   def isFile(): Boolean = Files.isRegularFile(jpath)
 
+  /** Returns true if the jpath is a symbolic link */
   def isSymLink(): Boolean = Files.isSymbolicLink(jpath)
 
+  /** Returns true if the jpath is a hidden file */
   def isHidden(): Boolean = Files.isHidden(jpath)
 
+  /** Returns true if the jpath is readable */
   def isReadable(): Boolean = Files.isReadable(jpath)
 
+  /** Returns true if the jpath is writable */
   def isWritable(): Boolean = Files.isWritable(jpath)
 
+  /** Returns true if the jpath is executable */
   def isExecutable(): Boolean = Files.isExecutable(jpath)
 
-  // etc.
-
-  //checkAccess -> canWrite, canRead, canExecute
+  /** Check access modes for the underlying path -> execute, read and write */
   def checkAccess(modes: AccessMode*): Boolean = {
     modes forall {
       case EXECUTE  => isExecutable()
@@ -224,37 +234,39 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     }
   }
 
-  //sets the access modes
+  /** Sets the access modes */
   def setAccess(accessModes:Iterable[AccessMode]) = {
     jfile.setReadable(accessModes exists {_==READ})
     jfile.setWritable(accessModes exists {_==WRITE})
     jfile.setExecutable(accessModes exists {_==EXECUTE})
   }
-  //lastModified
+  /** Returns the last modified time */
   def lastModified(): FileTime = Files.getLastModifiedTime(jpath)
 
-  //sets POSIX file permissions
+  /** Sets POSIX file permissions according to the arguments */
   def setFilePerm(perms: Set[PosixFilePermission]) : Path = Path(Files.setPosixFilePermissions(jpath, perms.asJava))
 
-  //createFile
+  /** Creates a file */
   def createFile(): Path = Path(Files.createFile(jpath))
 
-  //createDirectory
+  /** Creates a directory */
   def createDirectory(): Path = Path(Files.createDirectory(jpath))
 
-  //deleteIfExists
+  /** Deletes a file if and only if it exists*/
   def deleteIfExists(): Boolean = Files.deleteIfExists(jpath)
 
-  //delete
+  /** Deletes a file if it exists*/
   def delete() : Unit = Files.delete(jpath)
 
-  //deleteRecursively
+  /** Recursively deletes a directory and all of it's contents.
+   *
+   * Using the walkFileTree method, the function will recursively walk the target file tree
+   * and delete every element.
+  */
   def deleteRecursively(): Boolean = {
-    //first check if it's a dir or file
     if(exists() && isDirectory) {
       Files.walkFileTree(jpath,
         new SimpleFileVisitor[JPath] {
-          //@throws(classOf[IOException])
           override def postVisitDirectory(dir: JPath, e: IOException) : FileVisitResult = {
             if(e != null)
               throw e
@@ -263,7 +275,6 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
               FileVisitResult.CONTINUE
             }
           }
-
           override def visitFile(file: JPath,attrs: BasicFileAttributes ) : FileVisitResult = {
             Files.delete(file);FileVisitResult.CONTINUE
           }
@@ -283,14 +294,18 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       false
   }
 
-  //copyTo(source, target)
+  /** Copies a file to the target location */
   def copyTo(target: Path, options: CopyOption*) : Path = Path(Files.copy(jpath, target.jpath, options:_*))
 
 
-  //moveFile
+  /** Moves a file to the target location */
   def moveFile(target: Path, options: CopyOption*) : Unit = Files.move(jpath, target.jpath, options:_*)
 
-  //moveDirectory
+  /** Moves a directory to a given path recursively
+   *
+   * Uses Files walkFileTree method to recursively copy the entire
+   * contents of a directory to the target location
+  */
   def moveDirectory(target: Path) : Unit =
   {
     if(exists() && isDirectory)
@@ -316,5 +331,4 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
         })
     }
   }
-
 }
