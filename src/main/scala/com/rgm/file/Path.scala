@@ -311,9 +311,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     if(exists() && isDirectory)
     {
       Files.walkFileTree(jpath,
-        new SimpleFileVisitor[JPath]
-        {
-          //@throws(classOf[IOException])
+        new SimpleFileVisitor[JPath] {
           override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult = {
             Files.createDirectories(target.resolve(Path(jpath.relativize(dir))).jpath)
             FileVisitResult.CONTINUE

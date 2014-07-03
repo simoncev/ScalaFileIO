@@ -98,7 +98,8 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
     def result: PathSpec = new SimplePathSpec(paths: _*)
     def clear() = paths.clear()
   }
-
+  
+  /** Builds a new collection by applying a function to all elements */
   override def map[B, That](f: Path => B)(implicit bf: CanBuildFrom[PathSpec, B, That]): That = {
     bf match {
       case psbf: PathSpecCanBuildFrom => psbf(this, f.asInstanceOf[Path => Path]).result().asInstanceOf[That]
@@ -106,10 +107,12 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
     }
   }
 
+  /** Applies a filter to instance PathSet, it is lazy */
   override def filter(p: Path => Boolean): PathSpec = {
     new FilteredPathSpec(this, p)
   }
 
+  /** Builds a new collection by appling the argument function to all its elements that satify the predicate and concatenates the results */
   override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[PathSpec, B, That]): That = {
     bf match {
       case psbf: PathSpecCanBuildFrom => psbf(this, f.asInstanceOf[Path => GenTraversableOnce[Path]]).result().asInstanceOf[That]
@@ -117,6 +120,7 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
     }
   }
 
+  /** Applies a filter to instance PathSet, it is lazy */
   override def withFilter(p: Path => Boolean): PathSpec = {
     new FilteredPathSpec(this,p)
   }
