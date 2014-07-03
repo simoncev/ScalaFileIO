@@ -10,6 +10,7 @@ import java.nio.file.attribute._
 import java.util
 import scala.util
 import scala.Some
+import java.nio.channels.{AsynchronousByteChannel, AsynchronousFileChannel, Channels}
 
 
 object Path {
@@ -180,11 +181,6 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     else
       parent.get.resolve(other)
 
-//    val sibl : Path = if (other.isAbsolute) Path(other.path.substring(1)) else other
-//    if (this == (Path(fileSystem.separator)))
-//      Path(fileSystem.path("/.").jpath.resolveSibling(sibl.path))
-//    else
-//      Path(jpath.resolveSibling(sibl.path))
   }
 
   def sibling(other: String): Path = sibling(fileSystem.path(other))
@@ -193,13 +189,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   def toRealPath(options: LinkOption*): Path = Path(jpath.toRealPath(options : _*))
 
-  def exists(): Boolean = Files.exists(jpath)
+  def exists(options: LinkOption*): Boolean = Files.exists(jpath,options:_*)
 
-  def exists(options: LinkOption*): Boolean = Files.exists(jpath.toRealPath(options :_*))
-
-  def nonExistent(): Boolean = Files.notExists(jpath) 
-
-  def nonExistent(options: LinkOption*): Boolean = Files.notExists(jpath.toRealPath(options : _*))
+  def nonExistent(options: LinkOption*): Boolean = Files.notExists(jpath,options:_*)
 
   def isSame(other: Path): Boolean = normalize == other.normalize
 
@@ -257,7 +249,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //deleteRecursively
   def deleteRecursively(): Boolean = {
     //first check if it's a dir or file
-    if(exists && isDirectory) {
+    if(exists() && isDirectory) {
       Files.walkFileTree(jpath,
         new SimpleFileVisitor[JPath] {
           //@throws(classOf[IOException])
@@ -299,7 +291,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //moveDirectory
   def moveDirectory(target: Path) : Unit =
   {
-    if(exists && isDirectory)
+    if(exists() && isDirectory)
     {
       Files.walkFileTree(jpath,
         new SimpleFileVisitor[JPath]
