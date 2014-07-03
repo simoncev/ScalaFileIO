@@ -41,7 +41,6 @@ object PathSpec {
   protected class PathSpecCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSpec] {
       def apply(): Builder[Path,PathSpec] = new MappedPathSpecBuilder(new SimplePathSpec, (p: Path) => p)
       def apply(pathSpec: Traversable[Path]) = new MappedPathSpecBuilder(pathSpec.asInstanceOf[PathSpec], (p: Path) => p)
-      //only one intended for use
       def apply(pathSpec: PathSpec, f: Path=>Path) = new MappedPathSpecBuilder(pathSpec, f)
       def apply(pathSpec: PathSpec, func: Path => GenTraversableOnce[Path]) = new FlatMapSpecBuilder(pathSpec, func)
   }
