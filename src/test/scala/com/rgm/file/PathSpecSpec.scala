@@ -335,10 +335,8 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     val basePathSpec = PathSpec(Path(srcGlobal)).***
     val flatMapped = basePathSpec.flatMap(p => List(p, p / Path("foo")))
     var num = 0
-    for (p <- flatMapped) {
+    for (p <- flatMapped)
       num+=1
-      println(p)
-    }
     assert(num==18)
     assert(flatMapped.isInstanceOf[PathSpec])
   }
@@ -363,5 +361,12 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
 
   }
 
-  it should "28. Exclude flatMapped PathSets"
+  it should "28. Exclude flatMapped PathSets" in {
+    buildTmpFileTree
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val flat = basePathSpec.flatMap(p => List(p, p/ Path("foo")))
+    var num = 0
+    (basePathSpec --- flat).foreach((p: Path) => num+=1)
+    assert(num==9)
+  }
 }

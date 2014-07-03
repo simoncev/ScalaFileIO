@@ -107,8 +107,8 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
 
   override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[PathSpec, B, That]): That = {
     bf match {
-      case _ => super.flatMap(f)
       case psbf: PathSpecCanBuildFrom => psbf(this, f.asInstanceOf[Path => GenTraversableOnce[Path]]).result().asInstanceOf[That]
+      case _ => super.flatMap(f)
     }
   }
 
