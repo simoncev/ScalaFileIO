@@ -48,6 +48,7 @@ object PathSpec {
 
 abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, PathSpec] {
 
+  /**Returns the union of the two PathSpecs.  May contain duplicates*/
   def +++(includes: PathSpec): PathSpec = {
     (this, includes) match {
       case (xThis: SimplePathSpec, xIncludes: SimplePathSpec) => {
@@ -68,20 +69,28 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
     }
   }
 
+  /**Returns a PathSpec with the members of excludes excluded from this path set*/
   def ---(excludes: PathSpec): PathSpec = new ExclusionPathSpec(this, excludes)
 
+  /**Returns a PathSpec of the children who match the matcher*/
   def *(matcher: PathMatcher): PathSpec = children(matcher)
 
+  /**Returns a PathSpec of the descendants to depth d who match the matcher*/
   def **(matcher: PathMatcher, d: Int): PathSpec = descendents(matcher, d)
 
+  /**Returns a PathSpec of all descendants of this*/
   def *** : PathSpec = this **(PathMatcher( """.*""".r), Int.MaxValue)
 
+  /**Returns a PathSpec of the children who match the glob literal*/
   def /(literal: String): PathSpec = this **(PathMatcher(literal), 1)
 
-  def ancestorsOf(p: Path): Set[Path]
+  /**Returns the prefixes of p which are members of this (can include p).*/
+  protected def ancestorsOf(p: Path): Set[Path]
 
+  /**Returns the children who match this matcher*/
   def children(matcher: PathMatcher): PathSpec = new TreeWalkPathSpec(this, 1, matcher)
 
+  /**Returns the descendents up to depth d who match matcher*/
   def descendents(matcher: PathMatcher, d: Int): PathSpec = {
     if (d >= 0)
       new TreeWalkPathSpec(this, d, matcher)
@@ -91,6 +100,7 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
 
   protected def underlying: PathSpec = this
 
+  /**Defines the builder to be used by Traversable[Path] when creating literal PathSpecs*/
   override def newBuilder: Builder[Path, PathSpec] = new Builder[Path, PathSpec] {
     val paths = new ArrayBuffer[Path]
     def apply() = this
@@ -133,7 +143,7 @@ final class FlatMapPathSpec(pathSpec: PathSpec, func: Path => GenTraversableOnce
         f(q)
   }
 
-  override def ancestorsOf(p: Path): Set[Path] = {
+  override protected def ancestorsOf(p: Path): Set[Path] = {
     var ancestorSet = Set[Path]()
     for (candidateAncestor <- pathSpec)
       if (p startsWith Path(func(Path(candidateAncestor.toString)).toString))
@@ -150,7 +160,7 @@ final class SimplePathSpec(roots: Path*) extends PathSpec {
     roots.foreach((p: Path) => f(p))
   }
 
-  override def ancestorsOf(i: Path) : Set[Path] = {
+  override protected def ancestorsOf(i: Path) : Set[Path] = {
     var result: Set[Path] = Set[Path]()
     for(p <- root) {
       if(i startsWith p)
@@ -168,7 +178,7 @@ final private class CompoundPathSpec(pathSpecs: PathSpec*) extends PathSpec {
     for (i <- pathSpecSeq) i.foreach(f)
   }
 
-  override def ancestorsOf(p: Path): Set[Path] = {
+  override protected def ancestorsOf(p: Path): Set[Path] = {
     var ancestorSet = Set[Path]()
     for (pathSpec <- pathSpecSeq) {
       ancestorSet = ancestorSet ++ pathSpec.ancestorsOf(p)
@@ -183,7 +193,7 @@ final private class ExclusionPathSpec(superset: PathSpec, excluded: PathSpec) ex
     superset.foreach((p: Path) => if (!excluded.ancestorsOf(p).contains(p)) f(p))
   }
 
-  override def ancestorsOf(i: Path): Set[Path] = {
+  override protected def ancestorsOf(i: Path): Set[Path] = {
     val aAnc: Set[Path] = superset.ancestorsOf(i)
     val bAnc: Set[Path] = excluded.ancestorsOf(i)
     aAnc -- bAnc
@@ -195,7 +205,7 @@ final private class FilteredPathSpec(p: PathSpec, func: Path => Boolean) extends
     p.foreach((p: Path) => if(func(p)) f(p))
   }
 
-  override def ancestorsOf(i: Path): Set[Path] = {
+  override protected def ancestorsOf(i: Path): Set[Path] = {
     p.ancestorsOf(i)
   }
 }
@@ -232,7 +242,7 @@ final private class TreeWalkPathSpec(memberPathSpec: PathSpec, depth: Int, match
     }
   }
 
-  override def ancestorsOf(p: Path): Set[Path] = {
+  override protected def ancestorsOf(p: Path): Set[Path] = {
     val ancestorRoots = memberPathSpec.ancestorsOf(p)
     var ancestorSet = Set[Path]()
     for (root <- ancestorRoots) {
@@ -256,7 +266,7 @@ final class MappedPathSpec(pathSpec: PathSpec, func: Path => Path) extends PathS
     for (p <- pathSpec)
       f(func(p))
   }
-  override def ancestorsOf(p: Path): Set[Path] = {
+  override protected def ancestorsOf(p: Path): Set[Path] = {
     var ancestorSet = Set[Path]()
     for (candidateAncestor <- pathSpec)
       if (p startsWith func(candidateAncestor))
