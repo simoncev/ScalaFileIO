@@ -71,17 +71,24 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
 
   def ---(excludes: PathSpec): PathSpec = new ExclusionPathSpec(this, excludes)
 
-  def *(matcher: PathMatcher): PathSpec = new TreeWalkPathSpec(this, 1, matcher)
+  def *(matcher: PathMatcher): PathSpec = children(matcher)
 
-  def **(matcher: PathMatcher): PathSpec = new TreeWalkPathSpec(this, Int.MaxValue, matcher)
-
-  def **(matcher: PathMatcher, d: Int): PathSpec = new TreeWalkPathSpec(this, d, matcher)
+  def **(matcher: PathMatcher, d: Int): PathSpec = descendents(matcher, d)
 
   def *** : PathSpec = this **(PathMatcher( """.*""".r), Int.MaxValue)
 
   def /(literal: String): PathSpec = this **(PathMatcher(literal), 1)
 
   def ancestorsOf(p: Path): Set[Path]
+
+  def children(matcher: PathMatcher): PathSpec = new TreeWalkPathSpec(this, 1, matcher)
+
+  def descendents(matcher: PathMatcher, d: Int): PathSpec = {
+    if (d >= 0)
+      new TreeWalkPathSpec(this, d, matcher)
+    else
+      new TreeWalkPathSpec(this, Int.MaxValue, matcher)
+  }
 
   protected def underlying: PathSpec = this
 

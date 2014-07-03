@@ -131,7 +131,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     assert(numTmps == 2)
 
     numTmps = 0
-    val pathSpecAllDepths = PathSpec(Path(srcGlobal)) ** matcher
+    val pathSpecAllDepths = PathSpec(Path(srcGlobal)) ** (matcher,-1)
     pathSpecAllDepths.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
 
@@ -141,7 +141,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   it should "9. Chain several filters together to cherrypick a file" in {
     buildTmpFileTree
     val rootSet = PathSpec(Path(srcGlobal))
-    val complexSet = rootSet +++ (rootSet ** PathMatcher(""".*dir[^\/]*""".r)) +++ (rootSet * allMatcher * PathMatcher(".*file.*".r))
+    val complexSet = rootSet +++ (rootSet ** (PathMatcher(""".*dir[^\/]*""".r),-1)) +++ (rootSet * allMatcher * PathMatcher(".*file.*".r))
     var numTmps = 0
     complexSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 7)
@@ -164,7 +164,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   it should "11. exlcudes & up to date system test" in {
     buildTmpFileTree
     var num = 0
-    val pathSpec = PathSpec(Path(srcGlobal)).*** --- (PathSpec(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r))
+    val pathSpec = PathSpec(Path(srcGlobal)).*** --- (PathSpec(Path(srcGlobal)) ** (PathMatcher(""".*\.tmp""".r),-1))
     Path.createTempDir(Path(srcGlobal), "dir_5_")
     pathSpec.foreach((p: Path) => num+=1)
     assert(num == 5)
@@ -212,7 +212,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     buildTmpFileTree
     val srcPath = PathSpec(Path(srcGlobal))
     var num = 0
-    val ps1 = ((((srcPath ***) --- (srcPath ** PathMatcher(""".*\.tmp""".r)))) +++ ((srcPath ***) --- (srcPath ** PathMatcher(""".*dir[^\/]*""".r)))) +++ srcPath
+    val ps1 = ((((srcPath ***) --- (srcPath ** (PathMatcher(""".*\.tmp""".r),-1)))) +++ ((srcPath ***) --- (srcPath ** (PathMatcher(""".*dir[^\/]*""".r),-1)))) +++ srcPath
     val pathSpec = ps1 --- (ps1 * PathMatcher(""".*\.tmp""".r))
     pathSpec.foreach((p: Path) => num +=1)
     assert(num==5)
@@ -235,7 +235,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     buildTmpFileTree
     val srcPath = PathSpec(Path(srcGlobal))
     var num = 0
-    val ps1 = (((srcPath ***) --- (srcPath ** PathMatcher(""".*\.tmp""".r)))) +++ ((srcPath ***) --- (srcPath ** PathMatcher(""".*dir[^\/]*""".r)))
+    val ps1 = (((srcPath ***) --- (srcPath ** (PathMatcher(""".*\.tmp""".r),-1)))) +++ ((srcPath ***) --- (srcPath ** (PathMatcher(""".*dir[^\/]*""".r),-1)))
     val filtered = ps1.filter((p: Path) => PathMatcher(""".*dir[^\/]*""".r).matches(p))
     for (p <- filtered) {
       num+=1
@@ -375,7 +375,6 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==0)
-
   }
 
   it should "28. Exclude flatMapped PathSets" in {
