@@ -114,6 +114,10 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
   override def withFilter(p: Path => Boolean): PathSpec = {
     new FilteredPathSpec(this,p)
   }
+
+  override def collect[B, That](pf: PartialFunction[Path, B])(implicit bf: CanBuildFrom[PathSpec, B, That]): That =  {
+    filter(pf.isDefinedAt(_)).map(pf)
+  }
 }
 
 final class FlatMapPathSpec(pathSpec: PathSpec, func: Path => GenTraversableOnce[Path]) extends PathSpec {

@@ -351,7 +351,6 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     }
     assert(num==18)
     assert(flatMapped.isInstanceOf[Traversable[Long]])
-
   }
 
   it should "26. FlatMap should compute lazily in Path=>Traversable[Path] case" in {
@@ -375,10 +374,9 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==0)
-
   }
 
-  it should "28. Exclude flatMapped PathSets" in {
+  it should "28. Exclude flatMapped PathSpecs" in {
     buildTmpFileTree
     val basePathSpec = PathSpec(Path(srcGlobal)).***
     val flat = basePathSpec.flatMap(p => List(p, p/ Path("foo")))
@@ -386,4 +384,72 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     (basePathSpec --- flat).foreach((p: Path) => num+=1)
     assert(num==9)
   }
+
+  it should "29. Collect to PathSpec if partial function maps to a Path" in {
+    val parentIfExists = new PartialFunction[Path, Path] {
+      def apply(p: Path) = p.parent.get
+      def isDefinedAt(p: Path) = p.exists
+    }
+    buildTmpFileTree
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val flatMapped = basePathSpec.flatMap(p => List(p, p / Path("foo")))
+    val collected = flatMapped.collect(parentIfExists)
+    var num = 0
+    for (p <- collected) {
+      num+=1
+    }
+    assert(num==9)
+    assert(collected.isInstanceOf[PathSpec])
+  }
+
+  it should "30. Collect to a Traversable[B] if partial function doesn't map to Path" in {
+    val sizeIfExists = new PartialFunction[Path, Long] {
+      def apply(p: Path) = p.size.get
+      def isDefinedAt(p: Path) = p.exists
+    }
+    buildTmpFileTree
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val flatMapped = basePathSpec.flatMap(p => List(p, p / Path("foo")))
+    val collected = flatMapped.collect(sizeIfExists)
+    var num = 0
+    for (p <- collected) {
+      num+=1
+    }
+    assert(num==9)
+    assert(collected.isInstanceOf[Traversable[Long]])
+  }
+
+  it should "31. Evaluate lazily if partial function maps to a Path" in {
+    val parentIfExists = new PartialFunction[Path, Path] {
+      def apply(p: Path) = p.parent.get
+      def isDefinedAt(p: Path) = p.exists
+    }
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val flatMapped = basePathSpec.flatMap(p => List(p, p / Path("foo")))
+    val collected = flatMapped.collect(parentIfExists)
+    buildTmpFileTree
+    var num = 0
+    for (p <- collected) {
+      num+=1
+    }
+    assert(num==9)
+    assert(collected.isInstanceOf[PathSpec])
+  }
+
+  it should "32. Evaluate eagerly if partial function doesn't map to a Path" in {
+    val sizeIfExists = new PartialFunction[Path, Long] {
+      def apply(p: Path) = p.size.get
+      def isDefinedAt(p: Path) = p.exists
+    }
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val flatMapped = basePathSpec.flatMap(p => List(p, p / Path("foo")))
+    val collected = flatMapped.collect(sizeIfExists)
+    buildTmpFileTree
+    var num = 0
+    for (p <- collected) {
+      num+=1
+    }
+    assert(num==0)
+  }
+
 }
