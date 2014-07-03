@@ -337,7 +337,6 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     var num = 0
     for (p <- flatMapped) {
       num+=1
-      println(p)
     }
     assert(num==18)
     assert(flatMapped.isInstanceOf[PathSpec])
@@ -357,9 +356,26 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   }
 
   it should "26. FlatMap should compute lazily in Path=>Traversable[Path] case" in {
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val flatMapped = basePathSpec.flatMap(p => List(p, p / Path("foo")))
+    buildTmpFileTree
+    var num = 0
+    for (p <- flatMapped) {
+      num+=1
+    }
+    assert(num==18)
+
   }
 
   it should "27. FlatMap should compute eagerly in Path=>Traversable[Path] case" in {
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val flatMapped = basePathSpec.flatMap(p => List(p.size.get, p.size.get+1))
+    buildTmpFileTree
+    var num = 0
+    for (p <- flatMapped) {
+      num+=1
+    }
+    assert(num==0)
 
   }
 
