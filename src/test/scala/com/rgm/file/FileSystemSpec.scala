@@ -260,24 +260,5 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     assert(p.inputStream.read() == 83)
     flagGlobal = true
   }
-  //setFilePerm test-> sets posix file permissions
-  //  it should "19. create a file, change posix permissions, ensure they were set correctly" in {
-  //    val p = new Path(FileSystems.getDefault.getPath(targetGlobal)).createTempFile("test", ".tmp")
-  //    val s = Set(attribute.PosixFilePermission.GROUP_EXECUTE,attribute.PosixFilePermission.GROUP_READ,attribute.PosixFilePermission.GROUP_WRITE,attribute.PosixFilePermission.OTHERS_EXECUTE,attribute.PosixFilePermission.OTHERS_READ,attribute.PosixFilePermission.OTHERS_WRITE,attribute.PosixFilePermission.OWNER_EXECUTE,attribute.PosixFilePermission.OWNER_READ,attribute.PosixFilePermission.OWNER_WRITE).toSet
-  //    p.setFilePerm(s)
-  //    assert(p.checkAccess())
-  //  }
-
-  //  it should "19. correct the case of paths with toRealPath" in {
-  //    for(i <- filsGlobal.toList) {
-  //      val equivalentPath = Path(Path(i).path.toUpperCase)
-  //      if(!(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i)))
-  //        flagGlobal = false
-  //      assert(equivalentPath.toRealPath(LinkOption.NOFOLLOW_LINKS) != Path(i))
-  //    }
-  //  }
-
-
-
 
 }
