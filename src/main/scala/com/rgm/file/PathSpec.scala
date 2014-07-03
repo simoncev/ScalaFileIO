@@ -22,17 +22,12 @@ object PathSpec {
   implicit def canBuildFrom: CanBuildFrom[Traversable[Path], Path, PathSpec] =
     new PathSpecCanBuildFrom
 
-//
-//  protected class PathSpecBuilder(pathSpec: PathSpec) extends Builder[Path,PathSpec] {
-//    def result() = pathSpec
-//    def clear() = super.clear()
-//    def +=(p: Path) = super.+=(p)
-//  }
-
+  /*MappedPathSpecBuilder not intended to be used as an accumulator, merely as a vessel for creating a
+  * MappedPathSpec from PATHSPEC and F*/
   protected class MappedPathSpecBuilder(pathSpec: PathSpec, f: Path=>Path) extends Builder[Path,PathSpec] {
-    def result() = new MappedPathSpec(pathSpec, f)
-    def clear() = this
-    def +=(p: Path) = this
+    override def result(): PathSpec = new MappedPathSpec(pathSpec, f)
+    override def clear() = Unit
+    override def +=(p: Path) = this
   }
 
   protected class PathSpecCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSpec] {
@@ -101,14 +96,11 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
     new FilteredPathSpec(this, p)
   }
 
-  //
-//  override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Traversable[Path], B, That]): That = {
-//
+  override def flatMap[B, That](f: Path => GenTraversableOnce[B])(implicit bf: CanBuildFrom[PathSpec, B, That]): That = super.flatMap(f)(bf)
 
   override def withFilter(p: Path => Boolean): PathSpec = {
     new FilteredPathSpec(this,p)
   }
-
 }
 
 final class SimplePathSpec(roots: Path*) extends PathSpec {

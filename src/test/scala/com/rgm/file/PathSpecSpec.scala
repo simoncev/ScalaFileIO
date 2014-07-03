@@ -280,7 +280,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==9)
-    assert(mapped.isInstanceOf[Traversable[Int]])
+    assert(mapped.isInstanceOf[Traversable[Option[Long]]])
 
   }
 
@@ -324,7 +324,6 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     val mapped = basePathSpec.map((p: Path) => p / Path("foo"))
     val mappedBack = mapped.map((p: Path) => p.parent.get)
     buildTmpFileTree
-    var num = 0
     val mappedBackSeq = mappedBack.toSeq
     val baseSeq = basePathSpec.toSeq
     for (i <- 0 until mapped.count(p => true)) {
@@ -332,5 +331,35 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     }
   }
 
-  //it should "24. "
+  it should "24. Use flatMap to collapse resulting collections to a PathSpec in Path=>Traversable[Path] case" in {
+    buildTmpFileTree
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val flatMapped = basePathSpec.flatMap(p => List(p, p / Path("foo")))
+    var num = 0
+    for (p <- flatMapped) {
+      num+=1
+    }
+    assert(num==18)
+    assert(flatMapped.isInstanceOf[PathSpec])
+  }
+
+  it should "25. FlatMap should collapse resulting collections to Traversable in Path=>Traversable[non-Path] case" in {
+    buildTmpFileTree
+    val basePathSpec = PathSpec(Path(srcGlobal)).***
+    val flatMapped = basePathSpec.flatMap(p => List(p.size.get, p.size.get+1))
+    var num = 0
+    for (p <- flatMapped) {
+      num+=1
+    }
+    assert(num==18)
+    assert(flatMapped.isInstanceOf[Traversable[Long]])
+
+  }
+
+  it should "26. FlatMap should compute lazily in Path=>Traversable[Path] case" in {
+  }
+
+  it should "27. FlatMap should compute eagerly in Path=>Traversable[Path] case" in {
+
+  }
 }
