@@ -165,7 +165,6 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     buildTmpFileTree
     var num = 0
     val pathSpec = PathSpec(Path(srcGlobal)).*** --- (PathSpec(Path(srcGlobal)) ** PathMatcher(""".*\.tmp""".r))
-    println(pathSpec.isInstanceOf[ExclusionPathSpec])
     Path.createTempDir(Path(srcGlobal), "dir_5_")
     pathSpec.foreach((p: Path) => num+=1)
     assert(num == 5)
@@ -259,7 +258,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     assert(mapped.isInstanceOf[PathSpec])
   }
 
-  it should "18. Test the laziness of filter and withFilter" in {
+  it should "18. Test the laziness of withFilter" in {
     buildTmpFileTree
     val srcPath = (PathSpec(Path(srcGlobal)) ***)
     val fltr = srcPath.withFilter((p: Path) => PathMatcher(""".*dir[^\/]*""".r).matches(p))
@@ -338,6 +337,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     var num = 0
     for (p <- flatMapped) {
       num+=1
+      println(p)
     }
     assert(num==18)
     assert(flatMapped.isInstanceOf[PathSpec])
@@ -362,4 +362,6 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   it should "27. FlatMap should compute eagerly in Path=>Traversable[Path] case" in {
 
   }
+
+  it should "28. Exclude flatMapped PathSets"
 }
