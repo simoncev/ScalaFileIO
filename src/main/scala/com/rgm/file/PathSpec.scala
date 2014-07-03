@@ -31,8 +31,8 @@ object PathSpec {
 
   protected class MappedPathSpecBuilder(pathSpec: PathSpec, f: Path=>Path) extends Builder[Path,PathSpec] {
     def result() = new MappedPathSpec(pathSpec, f)
-    def clear() = this
-    def +=(p: Path) = this
+    def clear() =  this
+    def +=(p: Path) =  this
   }
 
   protected class PathSpecCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSpec] {
