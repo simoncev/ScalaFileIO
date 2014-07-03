@@ -58,9 +58,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  def inputStream: InputStream = new FileInputStream(jpath.toFile)
+  def inputStream: InputStream = new FileInputStream(path)
 
-  def outputStream: OutputStream = new FileOutputStream(jpath.toFile)
+  def outputStream: OutputStream = new FileOutputStream(path)
 
   def fileSystem: FileSystem = FileSystem(jpath.getFileSystem)
 
