@@ -48,6 +48,7 @@ object PathSpec {
 
 abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, PathSpec] {
 
+  /**Returns the union of the two PathSpecs.  May contain duplicates*/
   def +++(includes: PathSpec): PathSpec = {
     (this, includes) match {
       case (xThis: SimplePathSpec, xIncludes: SimplePathSpec) => {
@@ -68,20 +69,28 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
     }
   }
 
+  /**Returns a PathSpec with the members of excludes excluded from this path set*/
   def ---(excludes: PathSpec): PathSpec = new ExclusionPathSpec(this, excludes)
 
+  /**Returns a PathSpec of the children who match the matcher*/
   def *(matcher: PathMatcher): PathSpec = children(matcher)
 
+  /**Returns a PathSpec of the descendants to depth d who match the matcher*/
   def **(matcher: PathMatcher, d: Int): PathSpec = descendents(matcher, d)
 
+  /**Returns a PathSpec of all descendants of this*/
   def *** : PathSpec = this **(PathMatcher( """.*""".r), Int.MaxValue)
 
+  /**Returns a PathSpec of the children who match the glob literal*/
   def /(literal: String): PathSpec = this **(PathMatcher(literal), 1)
 
+  /**Returns the prefixes of p which are members of this (can include p).*/
   def ancestorsOf(p: Path): Set[Path]
 
+  /**Returns the children who match this matcher*/
   def children(matcher: PathMatcher): PathSpec = new TreeWalkPathSpec(this, 1, matcher)
 
+  /**Returns the descendents up to depth d who match matcher*/
   def descendents(matcher: PathMatcher, d: Int): PathSpec = {
     if (d >= 0)
       new TreeWalkPathSpec(this, d, matcher)
@@ -91,6 +100,7 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
 
   protected def underlying: PathSpec = this
 
+  /**Defines the builder to be used by Traversable[Path] when creating literal PathSpecs*/
   override def newBuilder: Builder[Path, PathSpec] = new Builder[Path, PathSpec] {
     val paths = new ArrayBuffer[Path]
     def apply() = this
