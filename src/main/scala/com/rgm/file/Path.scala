@@ -55,10 +55,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   //--------------------------------------------------------------------------------------------------------------------
 
+  /** Returns an inputstream object with the underlying path*/
   def inputStream: InputStream = new FileInputStream(path)
 
+  /** Return an outputstream object with the underlying path*/
   def outputStream: OutputStream = new FileOutputStream(path)
 
+  /** Returns a file system object using the underlying path */
   def fileSystem: FileSystem = FileSystem(jpath.getFileSystem)
 
   /**Complete path*/
