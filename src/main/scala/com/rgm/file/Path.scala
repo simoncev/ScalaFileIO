@@ -71,9 +71,8 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def simpleName: String =
     if(extension == None)
       name
-    else {
+    else
       name.dropRight(name.size - name.lastIndexWhere(_ == '.'))
-    }
 
   /**Extension, ignores leading dot on hidden files*/
   def extension: Option[String] =
@@ -165,10 +164,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       Path(jpath.resolve(other.jpath))
   }
 
+  /**Returns this concatenated with other.  If other is absolute, other is relativized first*/
   def resolve(other: String): Path = resolve(fileSystem.path(other))
 
+  /**Returns this resolved with other*/
   def / (other: Path): Path = resolve(other)
 
+  /**Returns this resolved with other*/
   def / (other: String): Path = resolve(other)
 
   /**Returns other concatenated onto your parent
@@ -185,6 +187,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   }
 
+  /**Returns other concatenated onto your parent*/
   def sibling(other: String): Path = sibling(fileSystem.path(other))
 
   //--------------------------------------------------------------------------------------------------------------------
