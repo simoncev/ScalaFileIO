@@ -89,7 +89,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //createTempDir test
   it should "6. create temp dir in target and check its existence" in {
-    val p = Path.createTempDir(Path(FileSystems.getDefault.getPath(targetGlobal)), "test")
+    val p = Path.createTempDirectory(Path(FileSystems.getDefault.getPath(targetGlobal)), "test")
     assert(p.exists())
     flagGlobal = true
   }
@@ -242,7 +242,7 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     assert(pth.exists() && Path("src/test/resources/tmpCopy").exists())
 
     //test create /tmpDir/file.tmp -> move to unix fileSystem
-    val d = Path.createTempDir(p, "tmpDir")
+    val d = Path.createTempDirectory(p, "tmpDir")
     d.exists()
     val dst = Path("/tmpDir")(zipSystem)
     d.moveDirectory(dst)
@@ -254,10 +254,10 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   it should "22. check file io stream" in {
     val p = Path((new java.io.File( "." ).getCanonicalPath).toString + "/src/test/resources/file.tmp")///Users/sshivaprasad/Documents/src/zpath/src/main/scala/com/rgm/file/Path.scala")
     p.deleteIfExists()
-    val ps = new java.io.PrintStream(p.outputStream)
+    val ps = new java.io.PrintStream(p.outputStream())
     ps.print("String")
     ps.close()
-    assert(p.inputStream.read() == 83)
+    assert(p.inputStream().read() == 83)
     flagGlobal = true
   }
 

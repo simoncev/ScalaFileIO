@@ -1,23 +1,17 @@
 package com.rgm.file
 
-import java.nio.file.{Path =>JPath, _}
-import org.scalatest.{FlatSpec, Suite, BeforeAndAfterEach}
-import scala.collection.mutable.ListBuffer
-import scala.util.{Try, Random}
-import java.net.URI
-import java.util
-import scala.language.postfixOps
+import com.rgm.file.Generators._
 import org.scalacheck.Prop._
 import org.scalacheck._
-import com.rgm.file.Generators._
-
-
+import org.scalatest.FlatSpec
+import java.nio.file.{Path => JPath}
+import scala.language.postfixOps
 
 class PathSpecSpec extends FlatSpec with FileSetupTeardown {
 
   behavior of "PathSpec"
 
-  val allMatcher = PathMatcher(""".*""".r)
+  val allMatcher = PathMatcher.All
 
   override def createFS(p: Path) : (Array[JPath],Array[JPath]) =
   {
@@ -27,10 +21,10 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   }
   def buildTmpFileTree = {
     val src = Path(srcGlobal)
-    val dir1 = Path.createTempDir(src, "dir_1_")
-    val dir2 = Path.createTempDir(src, "dir_2_")
-    val dir3 = Path.createTempDir(dir1, "dir_3_")
-    val dir4 = Path.createTempDir(dir2, "dir_4_")
+    val dir1 = Path.createTempDirectory(src, "dir_1_")
+    val dir2 = Path.createTempDirectory(src, "dir_2_")
+    val dir3 = Path.createTempDirectory(dir1, "dir_3_")
+    val dir4 = Path.createTempDirectory(dir2, "dir_4_")
 
     Path.createTempFile(dir1, "file_1_",".tmp")
     Path.createTempFile(dir1,"file_2_",".tmp")
@@ -87,13 +81,13 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     buildTmpFileTree
     val pathSpec = PathSpec(Path(srcGlobal))
     var num = 0
-    (pathSpec * """.*""".r).foreach((p: Path) => num+=1)
+    (pathSpec * PathMatcher.All).foreach((p: Path) => num+=1)
     assert(num==3)
     flagGlobal = true
   }
 
   it should "5. Does not match root on searches of children" in {
-    val pathSpec = PathSpec(Path.createTempDir(Path(srcGlobal), "file_1_")) * allMatcher
+    val pathSpec = PathSpec(Path.createTempDirectory(Path(srcGlobal), "file_1_")) * allMatcher
     var numFound = 0
     pathSpec.foreach((p: Path) => numFound += 1)
     assert(numFound == 0)
@@ -113,7 +107,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   it should "7. simple test union function" in {
     buildTmpFileTree
     var num = 0
-    val pathSpec = ((PathSpec(Path(srcGlobal)) ** (""".*dir[^\/]*""".r,10)) +++ (PathSpec(Path(srcGlobal)) ** (""".*\.tmp""".r,10)))
+    val pathSpec = ((PathSpec(Path(srcGlobal)).descendants(""".*dir[^\/]*""".r,10)) +++ (PathSpec(Path(srcGlobal)).descendants(""".*\.tmp""".r,10)))
     pathSpec.foreach((p: Path) => num+=1)
     assert(num == 9)
 
@@ -126,7 +120,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
     Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
     Path.createTempFile(Path(srcGlobal), "baz", ".scala")
-    val dir1 = Path.createTempDir(Path(srcGlobal), "dir1")
+    val dir1 = Path.createTempDirectory(Path(srcGlobal), "dir1")
     Path.createTempFile(dir1, "foo", ".tmp")
     Path.createTempFile(dir1, "bar", ".tmp")
     Path.createTempFile(dir1, "baz", ".tmp")
@@ -135,7 +129,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     assert(numTmps == 2)
 
     numTmps = 0
-    val pathSpecAllDepths = PathSpec(Path(srcGlobal)) ** (matcher,-1)
+    val pathSpecAllDepths = PathSpec(Path(srcGlobal)) ** (matcher)
     pathSpecAllDepths.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
 
@@ -145,7 +139,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   it should "9. Chain several filters together to cherrypick a file" in {
     buildTmpFileTree
     val rootSet = PathSpec(Path(srcGlobal))
-    val complexSet = rootSet +++ (rootSet ** (PathMatcher(""".*dir[^\/]*""".r),-1)) +++ (rootSet * allMatcher * PathMatcher(".*file.*".r))
+    val complexSet = rootSet +++ (rootSet ** (PathMatcher(""".*dir[^\/]*""".r))) +++ (rootSet * allMatcher * PathMatcher(".*file.*".r))
     var numTmps = 0
     complexSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 7)
@@ -168,8 +162,8 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   it should "11. exlcudes & up to date system test" in {
     buildTmpFileTree
     var num = 0
-    val pathSpec = PathSpec(Path(srcGlobal)).*** --- (PathSpec(Path(srcGlobal)) ** (PathMatcher(""".*\.tmp""".r),-1))
-    Path.createTempDir(Path(srcGlobal), "dir_5_")
+    val pathSpec = PathSpec(Path(srcGlobal)).*** --- (PathSpec(Path(srcGlobal)) ** (PathMatcher(""".*\.tmp""".r)))
+    Path.createTempDirectory(Path(srcGlobal), "dir_5_")
     pathSpec.foreach((p: Path) => num+=1)
     assert(num == 5)
     flagGlobal = true
@@ -216,7 +210,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     buildTmpFileTree
     val srcPath = PathSpec(Path(srcGlobal))
     var num = 0
-    val ps1 = ((((srcPath ***) --- (srcPath ** (PathMatcher(""".*\.tmp""".r),-1)))) +++ ((srcPath ***) --- (srcPath ** (PathMatcher(""".*dir[^\/]*""".r),-1)))) +++ srcPath
+    val ps1 = ((((srcPath ***) --- (srcPath ** (PathMatcher(""".*\.tmp""".r))))) +++ ((srcPath ***) --- (srcPath ** (PathMatcher(""".*dir[^\/]*""".r))))) +++ srcPath
     val pathSpec = ps1 --- (ps1 * PathMatcher(""".*\.tmp""".r))
     pathSpec.foreach((p: Path) => num +=1)
     assert(num==5)
@@ -239,7 +233,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     buildTmpFileTree
     val srcPath = PathSpec(Path(srcGlobal))
     var num = 0
-    val ps1 = (((srcPath ***) --- (srcPath ** (PathMatcher(""".*\.tmp""".r),-1)))) +++ ((srcPath ***) --- (srcPath ** (PathMatcher(""".*dir[^\/]*""".r),-1)))
+    val ps1 = (((srcPath ***) --- (srcPath ** (PathMatcher(""".*\.tmp""".r))))) +++ ((srcPath ***) --- (srcPath ** (PathMatcher(""".*dir[^\/]*""".r))))
     val filtered = ps1.filter((p: Path) => PathMatcher(""".*dir[^\/]*""".r).matches(p))
     for (p <- filtered) {
       num+=1
@@ -269,7 +263,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     var num1 = 0
     var num2 = 0
     fltr.foreach((p: Path) => num1+=1)
-    Path.createTempDir(Path(srcGlobal), "dir_9_")
+    Path.createTempDirectory(Path(srcGlobal), "dir_9_")
     fltr.foreach((p: Path) => num2+=1)
     assert(num1==4 && num2==5)
   }

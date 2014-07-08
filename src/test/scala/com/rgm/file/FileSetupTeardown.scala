@@ -42,7 +42,7 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
     var dirs = new Array[JPath](no)
     for(x <- 0 to no-1)
     {
-      val tmp = Path.createTempDir(p, x.toString + "_")
+      val tmp = Path.createTempDirectory(p, x.toString + "_")
       dirs(x) = tmp.jpath
       fls(x) = Path.createTempFile(tmp, x + "_", ".tmp").jpath
     }

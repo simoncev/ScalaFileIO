@@ -13,6 +13,10 @@ object PathMatcher {
   def apply(matcher: Path => Boolean): PathMatcher = new FunctionPathMatcher(matcher)
   def apply(s: String): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("glob:" + s))
   def apply(r: Regex): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("regex:" + r))
+
+  object All extends PathMatcher {
+    def matches(path: Path): Boolean = true
+  }
 }
 
 trait PathMatcher {

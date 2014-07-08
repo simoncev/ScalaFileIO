@@ -1,42 +1,46 @@
 package com.rgm.file
 
-import java.io.{File => JFile, _}
+import java.io.{File => JFile, OutputStream, InputStream, IOException}
 import java.net.{URI, URL}
-import java.nio.file.{Path => JPath, FileSystem => JFileSystem, _}
-import java.nio.file.AccessMode._
-import scala.language.implicitConversions
+import java.nio.file.attribute.{BasicFileAttributes, PosixFilePermission, FileTime, FileAttribute}
+import java.nio.file.{Path => JPath, _}
 import scala.collection.JavaConverters._
-import java.nio.file.attribute._
-
-import scala.Some
-
+import scala.language.implicitConversions
 
 object Path {
   def apply(jpath: JPath): Path = new Path(jpath)
   def apply(jfile: JFile): Path = new Path(jfile.toPath)
 
-  implicit val defaultFileSys: FileSystem = FileSystem(FileSystems.getDefault)
-
   def apply(uri: URI): Path = new Path(Paths.get(uri))
-  def apply(path: String)(implicit fileSys: FileSystem = defaultFileSys): Path = fileSys.path(path)
+  def apply(path: String)(implicit fileSystem: FileSystem ): Path = fileSystem.path(path)
 
   implicit def fromJPath(jpath: JPath): Path = apply(jpath)
   implicit def fromJFile(jfile: JFile): Path = apply(jfile)
   implicit def fromString(path: String): Path = apply(path)
 
-  implicit def toSpec(path: Path): PathSpec = PathSpec(path)
+  implicit def toPathSpec(path: Path): PathSpec = PathSpec(path)
 
   /** Creates temp file*/
-  def createTempFile(dir: Path, prefix: String, suffix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempFile(dir.jpath,prefix, suffix, attrs:_*))
+  def createTempFile(dir: Path = null, prefix: String = null, suffix: String = null,
+                     attributes: TraversableOnce[FileAttribute[_]] = Nil): Path = {
+    if (dir != null)
+      Path(Files.createTempFile(dir.jpath, prefix, suffix, attributes.toArray: _*))
+    else
+      Path(Files.createTempFile(prefix, suffix, attributes.toArray: _*))
+  }
 
   /**Creates temp directory*/
-  def createTempDir(dir: Path, prefix: String, attrs: FileAttribute[_]*) : Path = Path(Files.createTempDirectory(dir.jpath, prefix, attrs:_*))
-
-
-
+  def createTempDirectory(dir: Path = null, prefix: String = null,
+                          attributes: TraversableOnce[FileAttribute[_]] = Nil): Path = {
+    if (dir != null)
+      Path(Files.createTempDirectory(dir.jpath, prefix, attributes.toArray: _*))
+    else
+      Path(Files.createTempDirectory(null, prefix, attributes.toArray: _*))
+  }
 }
 
 final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
+  import java.nio.file.AccessMode._
 
   if (jpath == null) throw new NullPointerException("cannot wrap a null path")
 
@@ -55,65 +59,57 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  /** Returns an inputstream object with the underlying path*/
-  def inputStream: InputStream = new FileInputStream(path)
-
-  /** Return an outputstream object with the underlying path*/
-  def outputStream: OutputStream = new FileOutputStream(path)
-
   /** Returns a file system object using the underlying path */
   def fileSystem: FileSystem = FileSystem(jpath.getFileSystem)
 
-  /**Complete path*/
-  def path: String = toString
+  /** Complete path*/
+  def path: String = jpath.toString
 
-  /**Last segment of path*/
+  /** Last segment of path*/
   def name: String = if (path == fileSystem.separator) path else jpath.getFileName.toString
 
   /**Last segment, extension removed*/
-  def simpleName: String =
-    if(extension == None)
+  def simpleName: String = {
+    if (extension == None)
       name
     else
       name.dropRight(name.size - name.lastIndexWhere(_ == '.'))
+  }
 
   /**Extension, ignores leading dot on hidden files*/
-  def extension: Option[String] =
-    if(name == ".." || path == "" || name.tail.count(_ == '.') == 0)
+  def extension: Option[String] = {
+    if (name == ".." || path == "" || name.tail.count(_ == '.') == 0)
       None
     else
       Some(name.drop(name.lastIndexWhere(_ == '.') + 1))
+  }
 
   /**Returns sibling with extension, replacing existing one if necessary*/
-  def withExtension(extension: Option[String]): Path =
+  def withExtension(extension: Option[String]): Path = {
     if (extension != None)
       sibling(simpleName + "." + extension)
     else
       this
+  }
 
   /**Returns segments, including root*/
   def segments: Seq[Path] = segmentIterator.toSeq
 
   /**Just like segments */
-  def segmentIterator: Iterator[Path] =
+  def segmentIterator: Iterator[Path] = {
     if (isAbsolute)
       Iterator(fileSystem.path(fileSystem.separator)) ++ jpath.iterator().asScala.map(Path(_))
     else
       jpath.iterator().asScala.map(Path(_))
+  }
 
   def segmentCount: Int = if (isAbsolute) jpath.getNameCount + 1 else jpath.getNameCount
 
-  def root: Option[Path] = if (jpath.getRoot == null) None else Some(Path(jpath.getRoot))
+  private def optPath(p: JPath): Option[Path] = if (p == null) None else Some(new Path(p))
 
-  // there is a good argument for having this method always return an unwrapped (non-null) Path. For example:
-  //   Path("a").parent == Path("") or Path(".")
-  //   Path("").parent == Path("..")
-  //   Path("..").parent == Path("../..")
-  //   Path(fileSystem.separator).parent == Path(fileSystem.separator)
-  // is this sensible, or does it present serious problems? it would certainly be convenient.
-  // this breaks on ".." vs "../.." and "." and becomes inconsistent...
+  def root: Option[Path] = optPath(jpath.getRoot)
 
-  def parent: Option[Path] = if (jpath.getParent == null) None else Option(Path(jpath.getParent))
+  def parent: Option[Path] = optPath(jpath.getParent)
 
   /**Subpath starting at begin, stopping at end*/
   def subpath(begin: Int, end: Int): Path = Path(jpath.subpath(begin, end))
@@ -159,8 +155,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def relativeTo(base: String): Path = fileSystem.path(base).relativize(this)
 
   /**Returns this concatenated with other.  If other is absolute, other is relativized first*/
-  def resolve(other: Path): Path =
-  {
+  def resolve(other: Path): Path = {
     if (other.isAbsolute)
       Path(jpath.resolve(other.relativeTo(other.root.get).jpath))
     else
@@ -181,6 +176,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     * If you have no parent other is concatenated with the empty path.  Root's
     * siblings are an error.*/
   def sibling(other: Path): Path = {
+    // TODO: this compares a Path to an Option[Path] (always false)
     if (this == root)
       throw new IOException("Root has no sibling")
     else if (parent == None)
@@ -199,22 +195,24 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def toRealPath(options: LinkOption*): Path = Path(jpath.toRealPath(options : _*))
 
   /** Returns true if the jpath exists */
-  def exists(options: LinkOption*): Boolean = Files.exists(jpath,options:_*)
+  def exists(options: LinkOption*): Boolean = Files.exists(jpath, options:_*)
 
   /** Returns true if the jpath does not exist */
-  def nonExistent(options: LinkOption*): Boolean = Files.notExists(jpath,options:_*)
+  def nonExistent(options: LinkOption*): Boolean = Files.notExists(jpath, options:_*)
 
   /** Returns true if the jpath is the same as the argument path */
-  def isSame(other: Path): Boolean = normalize == other.normalize
+  def isSame(other: Path): Boolean = Files.isSameFile(jpath, other.jpath)
 
+  // TODO: this is broken: it should return None if the file does not exist rather than Some(0).
+  // fix and add a test case; ideally this operation should only touch disk once
   /** Returns the size of the file pointed to by jpath */
   def size(): Option[Long] = Option(Files.size(jpath))
 
   /** Returns true if the jpath is a directory */
-  def isDirectory(): Boolean = Files.isDirectory(jpath)
+  def isDirectory(options: LinkOption*): Boolean = Files.isDirectory(jpath, options: _*)
 
-  /** Returns true if the jpath is a file */
-  def isFile(): Boolean = Files.isRegularFile(jpath)
+  /** Returns true if the jpath is a regular file */
+  def isFile(options: LinkOption*): Boolean = Files.isRegularFile(jpath, options: _*)
 
   /** Returns true if the jpath is a symbolic link */
   def isSymLink(): Boolean = Files.isSymbolicLink(jpath)
@@ -233,6 +231,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   /** Check access modes for the underlying path -> execute, read and write */
   def checkAccess(modes: AccessMode*): Boolean = {
+    // TODO: should only touch disk once
     modes forall {
       case EXECUTE  => isExecutable()
       case READ  => isReadable()
@@ -242,6 +241,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   /** Sets the access modes */
   def setAccess(accessModes:Iterable[AccessMode]) = {
+    // TODO: should not reference jfile or jpath.toFile and should only touch disk once
     jfile.setReadable(accessModes exists {_==READ})
     jfile.setWritable(accessModes exists {_==WRITE})
     jfile.setExecutable(accessModes exists {_==EXECUTE})
@@ -253,16 +253,31 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def setFilePerm(perms: Set[PosixFilePermission]) : Path = Path(Files.setPosixFilePermissions(jpath, perms.asJava))
 
   /** Creates a file */
-  def createFile(): Path = Path(Files.createFile(jpath))
+  // TODO: handle new arguments appropriately
+  def createFile(createParents: Boolean = true, failIfExists: Boolean = true,
+                 attributes: TraversableOnce[FileAttribute[_]] = Nil): this.type = {
+    Files.createFile(jpath)
+    this
+  }
 
   /** Creates a directory */
-  def createDirectory(): Path = Path(Files.createDirectory(jpath))
+  // TODO: handle new arguments appropriately
+  def createDirectory(createParents: Boolean = true, failIfExists: Boolean = true,
+                      attributes: TraversableOnce[FileAttribute[_]] = Nil): this.type = {
+    Files.createDirectory(jpath)
+    this
+  }
+
+  def createParentDirs(): this.type = {
+    parent.foreach(_.createDirectory(createParents = true, failIfExists = false))
+    this
+  }
 
   /** Deletes a file if and only if it exists*/
   def deleteIfExists(): Boolean = Files.deleteIfExists(jpath)
 
   /** Deletes a file if it exists*/
-  def delete() : Unit = Files.delete(jpath)
+  def delete(): Unit = Files.delete(jpath)
 
   /** Recursively deletes a directory and all of it's contents.
    *
@@ -270,7 +285,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
    * and delete every element.
   */
   def deleteRecursively(): Boolean = {
-    if(exists() && isDirectory) {
+    if(isDirectory()) {
       Files.walkFileTree(jpath,
         new SimpleFileVisitor[JPath] {
           override def postVisitDirectory(dir: JPath, e: IOException) : FileVisitResult = {
@@ -301,21 +316,19 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   }
 
   /** Copies a file to the target location */
-  def copyTo(target: Path, options: CopyOption*) : Path = Path(Files.copy(jpath, target.jpath, options:_*))
+  def copyTo(target: Path, options: CopyOption*): Path = Path(Files.copy(jpath, target.jpath, options:_*))
 
 
   /** Moves a file to the target location */
-  def moveFile(target: Path, options: CopyOption*) : Unit = Files.move(jpath, target.jpath, options:_*)
+  def moveFile(target: Path, options: CopyOption*): Unit = Files.move(jpath, target.jpath, options:_*)
 
   /** Moves a directory to a given path recursively
    *
    * Uses Files walkFileTree method to recursively copy the entire
    * contents of a directory to the target location
   */
-  def moveDirectory(target: Path) : Unit =
-  {
-    if(exists() && isDirectory)
-    {
+  def moveDirectory(target: Path) {
+    if(isDirectory()) {
       Files.walkFileTree(jpath,
         new SimpleFileVisitor[JPath] {
           override def preVisitDirectory(dir: JPath, attrs: BasicFileAttributes) : FileVisitResult = {
@@ -335,4 +348,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
         })
     }
   }
+
+  //--------------------------------------------------------------------------------------------------------------------
+
+  /** Opens and returns a new input stream that will read from this path. */
+  def inputStream(options: OpenOption*): InputStream = Files.newInputStream(jpath, options: _*)
+
+  /** Opens and returns a new output stream that will write to this path. */
+  def outputStream(options: OpenOption*): OutputStream = Files.newOutputStream(jpath, options: _*)
+
 }
