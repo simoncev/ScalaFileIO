@@ -2,10 +2,12 @@ package com.rgm.file
 
 import java.io.{File => JFile, OutputStream, InputStream, IOException}
 import java.net.{URI, URL}
-import java.nio.file.attribute.{BasicFileAttributes, PosixFilePermission, FileTime, FileAttribute}
+import java.nio.file.attribute._
 import java.nio.file.{Path => JPath, _}
 import scala.collection.JavaConverters._
 import scala.language.implicitConversions
+import scala.Some
+import scala.util.{Failure, Success, Try}
 
 object Path {
   def apply(jpath: JPath): Path = new Path(jpath)
@@ -241,16 +243,19 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   /** Check access modes for the underlying path -> execute, read and write */
   def checkAccess(modes: AccessMode*): Boolean = {
-    // TODO: should only touch disk once
-    modes forall {
-      case EXECUTE  => isExecutable()
-      case READ  => isReadable()
-      case WRITE  => isWritable()
+    val accessAttempt: Try[Unit] = Try(fileSystem.provider.checkAccess(jpath, modes.toSeq:_*))
+    accessAttempt match {
+      case accessible: Success[Unit] => true
+      case notAccessible: Failure[Unit] => false
     }
   }
 
   /** Sets the access modes */
   def setAccess(accessModes:Iterable[AccessMode]) = {
+//    Try(fileSystem.provider.checkAccess(jpath, accessModes.toSeq:_*)).map()
+
+
+
     // TODO: should not reference jfile or jpath.toFile and should only touch disk once
     jfile.setReadable(accessModes exists {_==READ})
     jfile.setWritable(accessModes exists {_==WRITE})
