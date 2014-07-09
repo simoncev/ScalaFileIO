@@ -147,6 +147,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     numTmps = 0
     exclusionSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 6)
+    flagGlobal = true
   }
 
   it should "10. Duplicate files which are in the intersection of two sets being unioned" in {
@@ -157,6 +158,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     var numTmps = 0
     union.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 12)
+    flagGlobal = true
   }
 
   it should "11. exlcudes & up to date system test" in {
@@ -179,6 +181,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     numTmps = 0
     pathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 1)
+    flagGlobal = true
   }
 
   it should "13. Exclude each different type of set correctly" in {
@@ -203,7 +206,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     numTmps = 0
     noCompoundPathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 6)
-
+    flagGlobal = true
   }
 
   it should "14. test a very intricate set of +++, *, **, ***, and ---" in {
@@ -227,6 +230,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     var numTmps = 0
     pathSpec.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 2)
+    flagGlobal = true
   }
 
   it should "16. Test the overriden filter method" in {
@@ -254,6 +258,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     }
     assert(num==9)
     assert(mapped.isInstanceOf[PathSpec])
+    flagGlobal = true
   }
 
   it should "18. Test the laziness of withFilter" in {
@@ -266,6 +271,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     Path.createTempDirectory(Path(srcGlobal), "dir_9_")
     fltr.foreach((p: Path) => num2+=1)
     assert(num1==4 && num2==5)
+    flagGlobal = true
   }
 
   it should "19. Mapping Path to a non-Path returns a non-path set of the same cardinality" in {
@@ -278,7 +284,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     }
     assert(num==9)
     assert(mapped.isInstanceOf[Traversable[Option[Long]]])
-
+    flagGlobal = true
   }
 
   it should "20. Exclusion of mapped path sets takes into account all possible paths to a file" in {
@@ -292,6 +298,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==9)
+    flagGlobal = true
   }
 
   it should "21. Mapped path sets are evaluated lazily if they result in a PathSpec " in {
@@ -303,6 +310,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==9)
+    flagGlobal = true
   }
 
   it should "22. Mapped path sets are evaluated eagerly if they map Path=>non-Path" in {
@@ -314,6 +322,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==0)
+    flagGlobal = true
   }
 
   it should "23. Test mapping back and forth" in {
@@ -326,6 +335,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     for (i <- 0 until mapped.count(p => true)) {
       assert(baseSeq(i) == mappedBackSeq(i))
     }
+    flagGlobal = true
   }
 
   it should "24. Use flatMap to collapse resulting collections to a PathSpec in Path=>Traversable[Path] case" in {
@@ -337,6 +347,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     assert(num==18)
     assert(flatMapped.isInstanceOf[PathSpec])
+    flagGlobal = true
   }
 
   it should "25. FlatMap should collapse resulting collections to Traversable in Path=>Traversable[non-Path] case" in {
@@ -349,6 +360,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     }
     assert(num==18)
     assert(flatMapped.isInstanceOf[Traversable[Long]])
+    flagGlobal = true
   }
 
   it should "26. FlatMap should compute lazily in Path=>Traversable[Path] case" in {
@@ -360,7 +372,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==18)
-
+    flagGlobal = true
   }
 
   it should "27. FlatMap should compute eagerly in Path=>Traversable[Path] case" in {
@@ -372,6 +384,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==0)
+    flagGlobal = true
   }
 
   it should "28. Exclude flatMapped PathSpecs" in {
@@ -381,6 +394,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     var num = 0
     (basePathSpec --- flat).foreach((p: Path) => num+=1)
     assert(num==9)
+    flagGlobal = true
   }
 
   it should "29. Collect to PathSpec if partial function maps to a Path" in {
@@ -398,6 +412,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     }
     assert(num==9)
     assert(collected.isInstanceOf[PathSpec])
+    flagGlobal = true
   }
 
   it should "30. Collect to a Traversable[B] if partial function doesn't map to Path" in {
@@ -415,6 +430,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     }
     assert(num==9)
     assert(collected.isInstanceOf[Traversable[Long]])
+    flagGlobal = true
   }
 
   it should "31. Evaluate lazily if partial function maps to a Path" in {
@@ -432,6 +448,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
     }
     assert(num==9)
     assert(collected.isInstanceOf[PathSpec])
+    flagGlobal = true
   }
 
   it should "32. Evaluate eagerly if partial function doesn't map to a Path" in {
@@ -448,6 +465,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
       num+=1
     }
     assert(num==0)
+    flagGlobal = true
   }
 }
 

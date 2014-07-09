@@ -25,10 +25,10 @@ trait FileSetupTeardown extends BeforeAndAfterEach { this: Suite =>
     val targetPath = new Path(FileSystems.getDefault.getPath(target))
     if(sourcePath.exists())
       sourcePath.deleteRecursively()
-    sourcePath.createDirectory()
+    sourcePath.createDirectory(false)
     if(targetPath.exists())
       targetPath.deleteRecursively()
-    targetPath.createDirectory()
+    targetPath.createDirectory(false)
     val (dirs,fils) = createFS(sourcePath)
     (src, target, dirs, fils)
   }

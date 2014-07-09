@@ -178,9 +178,8 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     * If you have no parent other is concatenated with the empty path.  Root's
     * siblings are an error.*/
   def sibling(other: Path): Path = {
-    // TODO: this compares a Path to an Option[Path] (always false)
-    if(root != None) //fix
-      if (this == root.get) //fix
+    if(root != None)
+      if (this == root.get)
         throw new IOException("Root has no sibling")
    if (parent == None)
     fileSystem.path("").resolve(other)
@@ -205,13 +204,8 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   /** Returns true if the jpath is the same as the argument path */
   def isSame(other: Path): Boolean = Files.isSameFile(jpath, other.jpath)
 
-  // TODO: this is broken: it should return None if the file does not exist rather than Some(0).
-  // fix and add a test case; ideally this operation should only touch disk once
   /** Returns the size of the file pointed to by jpath */
   def size(): Option[Long] = {
-//    if(nonExistent())
-//      None
-//    else Option(Files.size(jpath))
     try{
       Option(Files.size(jpath))
     }
@@ -268,18 +262,30 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def setFilePerm(perms: Set[PosixFilePermission]) : Path = Path(Files.setPosixFilePermissions(jpath, perms.asJava))
 
   /** Creates a file */
-  // TODO: handle new arguments appropriately
   def createFile(createParents: Boolean = true, failIfExists: Boolean = true,
                  attributes: TraversableOnce[FileAttribute[_]] = Nil): this.type = {
-    Files.createFile(jpath)
+    if(exists() && failIfExists)
+      throw new IOException("File already exists")
+    else if(isDirectory())
+      throw new IOException("Path is a directory hence cannot be created as a file. Use createDirectory instead")
+
+    if(createParents)
+      createParentDirs()
+    Files.createFile(jpath, attributes.toSeq:_*)
     this
   }
 
   /** Creates a directory */
-  // TODO: handle new arguments appropriately
   def createDirectory(createParents: Boolean = true, failIfExists: Boolean = true,
                       attributes: TraversableOnce[FileAttribute[_]] = Nil): this.type = {
-    Files.createDirectory(jpath)
+    if(exists() && failIfExists)
+      throw new IOException("Directory already exists")
+    else if(isFile())
+      throw new IOException("Path is a file hence cannot be created as a directory. Use createFile instead")
+    if(createParents && (this != root.get))
+      createParentDirs()
+    if(this != root.get && nonExistent())
+      Files.createDirectory(jpath, attributes.toSeq:_*)
     this
   }
 
