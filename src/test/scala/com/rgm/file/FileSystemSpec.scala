@@ -261,4 +261,9 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     flagGlobal = true
   }
 
+  it should "23. ensure size called on nonExistent file returns None and NOT Some(0)" in {
+    val p = Path("/foo/bar/tmp.txt")
+    assert(p.size() == None)
+  }
+
 }

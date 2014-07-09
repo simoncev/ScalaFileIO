@@ -85,9 +85,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   }
 
   /**Returns sibling with extension, replacing existing one if necessary*/
-  def withExtension(extension: Option[String]): Path = {
-    if (extension != None)
-      sibling(simpleName + "." + extension)
+  def withExtension(ext: Option[String]): Path = {
+    if (ext != None)
+      sibling(simpleName + "." + ext)
     else
       this
   }
@@ -177,13 +177,13 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     * siblings are an error.*/
   def sibling(other: Path): Path = {
     // TODO: this compares a Path to an Option[Path] (always false)
-    if (this == root)
-      throw new IOException("Root has no sibling")
-    else if (parent == None)
-      fileSystem.path("").resolve(other)
-    else
-      parent.get.resolve(other)
-
+    if(root != None) //fix
+      if (this == root.get) //fix
+        throw new IOException("Root has no sibling")
+   if (parent == None)
+    fileSystem.path("").resolve(other)
+   else
+    parent.get.resolve(other)
   }
 
   /**Returns other concatenated onto your parent*/
@@ -206,7 +206,17 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   // TODO: this is broken: it should return None if the file does not exist rather than Some(0).
   // fix and add a test case; ideally this operation should only touch disk once
   /** Returns the size of the file pointed to by jpath */
-  def size(): Option[Long] = Option(Files.size(jpath))
+  def size(): Option[Long] = {
+//    if(nonExistent())
+//      None
+//    else Option(Files.size(jpath))
+    try{
+      Option(Files.size(jpath))
+    }
+    catch {
+      case e: NoSuchFileException => None
+    }
+  }
 
   /** Returns true if the jpath is a directory */
   def isDirectory(options: LinkOption*): Boolean = Files.isDirectory(jpath, options: _*)
