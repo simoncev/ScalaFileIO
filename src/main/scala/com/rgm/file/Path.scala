@@ -246,10 +246,6 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   /** Sets the access modes */
   def setAccess(accessModes:Iterable[AccessMode]) = {
-//    Try(fileSystem.provider.checkAccess(jpath, accessModes.toSeq:_*)).map()
-
-
-
     // TODO: should not reference jfile or jpath.toFile and should only touch disk once
     jfile.setReadable(accessModes exists {_==READ})
     jfile.setWritable(accessModes exists {_==WRITE})
