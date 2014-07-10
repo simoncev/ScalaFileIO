@@ -310,4 +310,14 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     }
     flagGlobal = true
   }
+
+  it should "26. check combinations of access modes" in {
+
+  }
+
+  it should "27. set combinations of access modes" in {
+    val p = Path(targetGlobal + "tmp_dir.txt")
+    p.createFile(false)
+    for (perm <- p.check))
+  }
 }
