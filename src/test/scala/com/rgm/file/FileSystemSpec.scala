@@ -8,6 +8,8 @@ import scala.util.{Try, Random}
 import java.net.URI
 import java.util
 import java.io.{IOException, FileOutputStream, PrintStream}
+import java.nio.file.attribute.PosixFilePermission._
+import java.nio.file.attribute.PosixFilePermission
 
 
 class FileIOSpec extends FlatSpec with FileSetupTeardown {
@@ -177,10 +179,17 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   //access sets access modes for the given path
   it should "18. set the correct posix access modes" in {
-    assert(1==2)
-    val p = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
+    val assigningPerms = Set(GROUP_EXECUTE, GROUP_READ, OWNER_READ, OTHERS_WRITE)
+    val complementPerms = Set(GROUP_WRITE, OWNER_WRITE, OWNER_EXECUTE, OTHERS_EXECUTE, OTHERS_READ)
+
+    val tmp = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
     val l = List(AccessMode.EXECUTE)
-    assert(p.checkAccess(AccessMode.EXECUTE))
+    tmp.posixFilePerm_=(assigningPerms)
+    val actualPerms = tmp.posixFilePerm()
+    for (perm <- actualPerms)
+      assert(assigningPerms contains perm)
+    for (perm <- actualPerms)
+      assert(!(complementPerms contains perm))
     flagGlobal = true
   }
 
