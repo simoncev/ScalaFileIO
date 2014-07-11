@@ -237,8 +237,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   /** Check access modes for the underlying path -> execute, read and write */
   def checkAccess(modes: AccessMode*): Boolean = {
-    val accessAttempt: Try[Unit] = Try(fileSystem.provider.checkAccess(jpath, modes.toSeq:_*))
-    accessAttempt match {
+      Try(fileSystem.provider.checkAccess(jpath, modes.toSeq:_*)) match {
       case accessible: Success[Unit] => true
       case notAccessible: Failure[Unit] => false
     }
@@ -366,19 +365,17 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
 
   /** Opens and returns a new input stream that will read from this path. */
   def inputStream(options: OpenOption*): InputStream = {
-    try{
-      Files.newInputStream(jpath, options: _*)
-    } catch {
-      case e: NoSuchFileException => throw new java.io.FileNotFoundException
+    Try(Files.newInputStream(jpath, options: _*)) match {
+      case success: Success[InputStream] => success.get
+      case fail: Failure[InputStream] => throw new java.io.FileNotFoundException
     }
   }
 
   /** Opens and returns a new output stream that will write to this path. */
   def outputStream(options: OpenOption*): OutputStream = {
-    try {
-      Files.newOutputStream(jpath, options: _*)
-    } catch {
-      case e: NoSuchFileException => throw new java.io.FileNotFoundException
+    Try(Files.newOutputStream(jpath, options: _*)) match {
+      case success: Success[OutputStream] => success.get
+      case fail: Failure[OutputStream] => throw new java.io.FileNotFoundException
     }
   }
 
