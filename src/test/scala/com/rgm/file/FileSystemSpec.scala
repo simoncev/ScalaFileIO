@@ -176,10 +176,10 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
   }
 
   //access sets access modes for the given path
-  it should "18. set the correct access modes" in {
+  it should "18. set the correct posix access modes" in {
+    assert(1==2)
     val p = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
     val l = List(AccessMode.EXECUTE)
-    p.setAccess(l)
     assert(p.checkAccess(AccessMode.EXECUTE))
     flagGlobal = true
   }
@@ -315,9 +315,4 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   }
 
-  it should "27. set combinations of access modes" in {
-//    val p = Path(targetGlobal + "tmp_dir.txt")
-//    p.createFile(false)
-//    for (perm <- p.check))
-  }
 }

@@ -244,18 +244,14 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     }
   }
 
-  /** Sets the access modes */
-  def setAccess(accessModes:Iterable[AccessMode]) = {
-    // TODO: should not reference jfile or jpath.toFile and should only touch disk once
-    jfile.setReadable(accessModes exists {_==READ})
-    jfile.setWritable(accessModes exists {_==WRITE})
-    jfile.setExecutable(accessModes exists {_==EXECUTE})
-  }
   /** Returns the last modified time */
   def lastModified(): FileTime = Files.getLastModifiedTime(jpath)
 
   /** Sets POSIX file permissions according to the arguments */
-  def setFilePerm(perms: Set[PosixFilePermission]) : Path = Path(Files.setPosixFilePermissions(jpath, perms.asJava))
+  def posixFilePerm_=(perms: Set[PosixFilePermission]) : Path = Path(Files.setPosixFilePermissions(jpath, perms.asJava))
+
+  /** Gets POSIX file permissions*/
+  def posixFilePerm(options: LinkOption*) : Set[PosixFilePermission] = Files.getPosixFilePermissions(jpath, options:_*).asScala.toSeq.toSet
 
   /** Creates a file */
   def createFile(createParents: Boolean = true, failIfExists: Boolean = true,
