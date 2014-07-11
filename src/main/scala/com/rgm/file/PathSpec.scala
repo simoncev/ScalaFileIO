@@ -65,10 +65,10 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
   private[file] def ancestorsOf(p: Path): Set[Path]
 
   /**Returns the children who match this matcher*/
-  def children(matcher: PathMatcher): PathSpec = new TreeWalkPathSpec(this, 1, matcher)
+  def children(matcher: PathMatcher = PathMatcher.All): PathSpec = new TreeWalkPathSpec(this, 1, matcher)
 
   /**Returns the descendants up to depth d who match matcher*/
-  def descendants(matcher: PathMatcher, depth: Int = -1): PathSpec = {
+  def descendants(matcher: PathMatcher = PathMatcher.All, depth: Int = -1): PathSpec = {
     if (depth >= 0)
       new TreeWalkPathSpec(this, depth, matcher)
     else
