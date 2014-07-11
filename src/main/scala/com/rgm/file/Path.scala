@@ -365,9 +365,21 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   //--------------------------------------------------------------------------------------------------------------------
 
   /** Opens and returns a new input stream that will read from this path. */
-  def inputStream(options: OpenOption*): InputStream = Files.newInputStream(jpath, options: _*)
+  def inputStream(options: OpenOption*): InputStream = {
+    try{
+      Files.newInputStream(jpath, options: _*)
+    } catch {
+      case e: NoSuchFileException => throw new java.io.FileNotFoundException
+    }
+  }
 
   /** Opens and returns a new output stream that will write to this path. */
-  def outputStream(options: OpenOption*): OutputStream = Files.newOutputStream(jpath, options: _*)
+  def outputStream(options: OpenOption*): OutputStream = {
+    try {
+      Files.newOutputStream(jpath, options: _*)
+    } catch {
+      case e: NoSuchFileException => throw new java.io.FileNotFoundException
+    }
+  }
 
 }
