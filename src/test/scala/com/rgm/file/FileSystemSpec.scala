@@ -183,7 +183,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     val complementPerms = Set(GROUP_WRITE, OWNER_WRITE, OWNER_EXECUTE, OTHERS_EXECUTE, OTHERS_READ)
 
     val tmp = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
-    val l = List(AccessMode.EXECUTE)
     tmp.posixFilePerm_=(assigningPerms)
     val actualPerms = tmp.posixFilePerm()
     for (perm <- actualPerms)
