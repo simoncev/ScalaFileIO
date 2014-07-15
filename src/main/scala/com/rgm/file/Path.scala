@@ -275,7 +275,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       throw new IOException("Path is a file hence cannot be created as a directory. Use createFile instead")
     if(createParents)
       createParentDirs()
-    if(this != root.get && nonExistent())
+    if(nonExistent())
       Files.createDirectory(jpath, attributes.toSeq:_*)
     this
   }
