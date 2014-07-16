@@ -273,9 +273,9 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
       throw new IOException("Directory already exists")
     else if(isFile())
       throw new IOException("Path is a file hence cannot be created as a directory. Use createFile instead")
-    if(createParents && (this != root.get))
+    if(createParents)
       createParentDirs()
-    if(this != root.get && nonExistent())
+    if(nonExistent())
       Files.createDirectory(jpath, attributes.toSeq:_*)
     this
   }
@@ -367,7 +367,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def inputStream(options: OpenOption*): InputStream = {
     Try(Files.newInputStream(jpath, options: _*)) match {
       case success: Success[InputStream] => success.get
-      case fail: Failure[InputStream] => throw new java.io.FileNotFoundException
+      case fail: Failure[InputStream] => throw new NoSuchFileException(path)
     }
   }
 
@@ -375,7 +375,7 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
   def outputStream(options: OpenOption*): OutputStream = {
     Try(Files.newOutputStream(jpath, options: _*)) match {
       case success: Success[OutputStream] => success.get
-      case fail: Failure[OutputStream] => throw new java.io.FileNotFoundException
+      case fail: Failure[OutputStream] => throw new NoSuchFileException(path)
     }
   }
 
