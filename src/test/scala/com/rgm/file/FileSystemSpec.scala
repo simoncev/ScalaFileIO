@@ -183,7 +183,6 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
     val complementPerms = Set(GROUP_WRITE, OWNER_WRITE, OWNER_EXECUTE, OTHERS_EXECUTE, OTHERS_READ)
 
     val tmp = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
-    val l = List(AccessMode.EXECUTE)
     tmp.posixFilePerm_=(assigningPerms)
     val actualPerms = tmp.posixFilePerm()
     for (perm <- actualPerms)
@@ -322,11 +321,21 @@ class FileIOSpec extends FlatSpec with FileSetupTeardown {
 
   it should "26. check combinations of access modes" in {
 
+    val tmp = Path.createTempFile(Path(FileSystems.getDefault.getPath(targetGlobal)), "test", ".tmp")
+    val actualPerms = tmp.posixFilePerm()
+    var trueModes = Set[AccessMode]()
+    val allModes = Seq(AccessMode.EXECUTE, AccessMode.READ, AccessMode.WRITE)
+    for (mode <- allModes) {
+      println(mode + " is set? = " + tmp.checkAccess(mode))
+      if (tmp.checkAccess(mode))
+        trueModes += mode
+
+    }
+    for (mode1 <- allModes)
+      for (mode2 <- allModes)
+        assert(tmp.checkAccess(mode1, mode2) == (trueModes.contains(mode1) && trueModes.contains(mode2)))
+    flagGlobal = true
+
   }
 
-//  it should "27. set combinations of access modes" in {
-//    val p = Path(targetGlobal + "tmp_dir.txt")
-//    p.createFile(false)
-//    for (perm <- p.check))
-//  }
 }
