@@ -8,7 +8,7 @@ object PathMatcher {
   implicit def globMatcher(s: String): PathMatcher = apply(s)
   implicit def regexMatcher(r: Regex): PathMatcher = apply(r)
   
-  implicit def fromJava(matcher: JPathMatcher) = new FunctionPathMatcher((p: Path) => matcher.matches(p.jpath))
+  implicit def fromJava(matcher: JPathMatcher): PathMatcher = new FunctionPathMatcher((p: Path) => matcher.matches(p.jpath))
 
   def apply(matcher: Path => Boolean): PathMatcher = new FunctionPathMatcher(matcher)
   def apply(s: String): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("glob:" + s))
@@ -16,6 +16,10 @@ object PathMatcher {
 
   object All extends PathMatcher {
     def matches(path: Path): Boolean = true
+  }
+
+  private class FunctionPathMatcher(matcher: Path => Boolean) extends PathMatcher {
+    def matches(path: Path): Boolean = matcher(path)
   }
 }
 
@@ -35,9 +39,7 @@ trait PathMatcher {
  	def unary_! : PathMatcher = PathMatcher(!this.matches(_))
 }
 
-class FunctionPathMatcher(matcher: Path => Boolean) extends PathMatcher {
-  def matches(path: Path): Boolean = matcher(path)
-}
+
 
 trait PathNameMatcher extends PathMatcher {
   def matches(name: String): Boolean
