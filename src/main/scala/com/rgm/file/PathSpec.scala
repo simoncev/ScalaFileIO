@@ -20,7 +20,7 @@ object PathSpec {
     def clear() = paths.clear()
   }
 
-  protected class PathSpecCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSpec] {
+  private class PathSpecCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSpec] {
     def apply(): Builder[Path,PathSpec] = newBuilder
     def apply(pathSpec: Traversable[Path]) = {
       val acc = newBuilder
@@ -105,7 +105,7 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
   }
 }
 
-final protected class SimplePathSpec(val roots: Path*) extends PathSpec {
+final private class SimplePathSpec(val roots: Path*) extends PathSpec {
   override def foreach[U](f: Path => U): Unit = roots.foreach(f)
 
   private[file] override def ancestorsOf(i: Path): Set[Path] = {
@@ -118,7 +118,7 @@ final protected class SimplePathSpec(val roots: Path*) extends PathSpec {
   }
 }
 
-final protected class CompoundPathSpec(val pathSpecs: PathSpec*) extends PathSpec {
+final private class CompoundPathSpec(val pathSpecs: PathSpec*) extends PathSpec {
   override def foreach[U](f: Path => U) = {
     for (i <- pathSpecs) i.foreach(f)
   }
@@ -132,7 +132,7 @@ final protected class CompoundPathSpec(val pathSpecs: PathSpec*) extends PathSpe
   }
 }
 
-final protected class ExclusionPathSpec(superset: PathSpec, excluded: PathSpec) extends PathSpec {
+final private class ExclusionPathSpec(superset: PathSpec, excluded: PathSpec) extends PathSpec {
 
   override def foreach[U](f: Path => U) = {
     superset.foreach((p: Path) => if (!excluded.ancestorsOf(p).contains(p)) f(p))
@@ -145,7 +145,7 @@ final protected class ExclusionPathSpec(superset: PathSpec, excluded: PathSpec) 
   }
 }
 
-final protected class TreeWalkPathSpec(memberPathSpec: PathSpec, depth: Int, matcher: PathMatcher) extends PathSpec {
+final private class TreeWalkPathSpec(memberPathSpec: PathSpec, depth: Int, matcher: PathMatcher) extends PathSpec {
 
   override def foreach[U](f: Path => U) = {
     var d: Int = depth
@@ -195,12 +195,12 @@ final protected class TreeWalkPathSpec(memberPathSpec: PathSpec, depth: Int, mat
   }
 }
 
-final protected class FilteredPathSpec(p: PathSpec, func: Path => Boolean) extends PathSpec {
+final private class FilteredPathSpec(p: PathSpec, func: Path => Boolean) extends PathSpec {
   override def foreach[U](f: Path => U): Unit = p.foreach((p: Path) => if(func(p)) f(p))
   private[file] override def ancestorsOf(i: Path): Set[Path] = p.ancestorsOf(i)
 }
 
-final protected class MappedPathSpec(pathSpec: PathSpec, func: Path => Path) extends PathSpec {
+final private class MappedPathSpec(pathSpec: PathSpec, func: Path => Path) extends PathSpec {
   override def foreach[U](f: Path => U) = {
     for (p <- pathSpec)
       f(func(p))
@@ -215,7 +215,7 @@ final protected class MappedPathSpec(pathSpec: PathSpec, func: Path => Path) ext
 
 }
 
-final protected class FlatMapPathSpec(pathSpec: PathSpec, func: Path => GenTraversableOnce[Path]) extends PathSpec {
+final private class FlatMapPathSpec(pathSpec: PathSpec, func: Path => GenTraversableOnce[Path]) extends PathSpec {
   override def foreach[U](f: Path => U) = {
     for(p <- pathSpec)
       for(q <- func(p))
