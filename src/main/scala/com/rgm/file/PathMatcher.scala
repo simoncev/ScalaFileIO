@@ -39,9 +39,3 @@ trait PathMatcher {
  	def unary_! : PathMatcher = PathMatcher(!this.matches(_))
 }
 
-
-
-trait PathNameMatcher extends PathMatcher {
-  def matches(name: String): Boolean
-  final def matches(path: Path) = matches(path.name)
-}
