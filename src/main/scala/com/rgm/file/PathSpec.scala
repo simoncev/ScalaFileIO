@@ -20,7 +20,7 @@ object PathSpec {
     def clear() = paths.clear()
   }
 
-  private class PathSpecCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSpec] {
+  private[file] class PathSpecCanBuildFrom extends CanBuildFrom[Traversable[Path], Path, PathSpec] {
     def apply(): Builder[Path,PathSpec] = newBuilder
     def apply(pathSpec: Traversable[Path]) = {
       val acc = newBuilder
@@ -105,7 +105,10 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
   }
 }
 
-final private class SimplePathSpec(val roots: Path*) extends PathSpec {
+/**
+ * This class provides a basic simple PathSpec that is built on initial creation of a simple PathSpec
+ */
+final private[file] class SimplePathSpec(val roots: Path*) extends PathSpec {
   override def foreach[U](f: Path => U): Unit = roots.foreach(f)
 
   private[file] override def ancestorsOf(i: Path): Set[Path] = {
@@ -118,7 +121,10 @@ final private class SimplePathSpec(val roots: Path*) extends PathSpec {
   }
 }
 
-final private class CompoundPathSpec(val pathSpecs: PathSpec*) extends PathSpec {
+/**
+ * These PathSpecs are created when the '+++' function is used. It combines two PathSpecs into a compound PathSpec
+ */
+final private[file] class CompoundPathSpec(val pathSpecs: PathSpec*) extends PathSpec {
   override def foreach[U](f: Path => U) = {
     for (i <- pathSpecs) i.foreach(f)
   }
@@ -132,7 +138,10 @@ final private class CompoundPathSpec(val pathSpecs: PathSpec*) extends PathSpec 
   }
 }
 
-final private class ExclusionPathSpec(superset: PathSpec, excluded: PathSpec) extends PathSpec {
+/**
+ * This PathSpec is created when the '---' function is used. It Finds the intersection in the two PathSpecs and returns the original PathSpec with the intersection removed
+ */
+final private[file] class ExclusionPathSpec(superset: PathSpec, excluded: PathSpec) extends PathSpec {
 
   override def foreach[U](f: Path => U) = {
     superset.foreach((p: Path) => if (!excluded.ancestorsOf(p).contains(p)) f(p))
@@ -145,7 +154,12 @@ final private class ExclusionPathSpec(superset: PathSpec, excluded: PathSpec) ex
   }
 }
 
-final private class TreeWalkPathSpec(memberPathSpec: PathSpec, depth: Int, matcher: PathMatcher) extends PathSpec {
+/**
+ * This class is used to ensure lazy evaluation of PathSpecs.
+ * For example the children function creates a TreeWalkPathSpec as it will access disk and look for all the children.
+ * Hence it is required to walk to FileTree
+ */
+final private[file] class TreeWalkPathSpec(memberPathSpec: PathSpec, depth: Int, matcher: PathMatcher) extends PathSpec {
 
   override def foreach[U](f: Path => U) = {
     var d: Int = depth
@@ -195,12 +209,14 @@ final private class TreeWalkPathSpec(memberPathSpec: PathSpec, depth: Int, match
   }
 }
 
-final private class FilteredPathSpec(p: PathSpec, func: Path => Boolean) extends PathSpec {
+/* Filtered PathSpec is created when a PathMatcher filter is applied to a PathSpec */
+final private[file] class FilteredPathSpec(p: PathSpec, func: Path => Boolean) extends PathSpec {
   override def foreach[U](f: Path => U): Unit = p.foreach((p: Path) => if(func(p)) f(p))
   private[file] override def ancestorsOf(i: Path): Set[Path] = p.ancestorsOf(i)
 }
 
-final private class MappedPathSpec(pathSpec: PathSpec, func: Path => Path) extends PathSpec {
+/* A PathSpec designed specifically for the map function */
+final private[file] class MappedPathSpec(pathSpec: PathSpec, func: Path => Path) extends PathSpec {
   override def foreach[U](f: Path => U) = {
     for (p <- pathSpec)
       f(func(p))
@@ -215,7 +231,8 @@ final private class MappedPathSpec(pathSpec: PathSpec, func: Path => Path) exten
 
 }
 
-final private class FlatMapPathSpec(pathSpec: PathSpec, func: Path => GenTraversableOnce[Path]) extends PathSpec {
+/* A PathSpec designed specifically for the FlatMap function */
+final private[file] class FlatMapPathSpec(pathSpec: PathSpec, func: Path => GenTraversableOnce[Path]) extends PathSpec {
   override def foreach[U](f: Path => U) = {
     for(p <- pathSpec)
       for(q <- func(p))
