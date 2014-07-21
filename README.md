@@ -17,6 +17,7 @@ parentheses from
 Example:
 
 ```scala
+<<<<<<< HEAD
 val path1: Path = Path("/Users/zaphod/Documents/SpaceshipConfig.scala")
 val path2: Path = path1.sibling("HyperdriveConfig.scala")
 val path2Stream = path2.outputStream()
@@ -48,5 +49,4 @@ val childrenDirectories = pathLiteral * PathMatcher(_.isDirectory())
 for (path <- pathLiteral) {
   println(path) //executes on paths that exist on disk and conform to the properties specified
 }
-
 ```
