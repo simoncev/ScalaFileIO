@@ -17,11 +17,11 @@ parentheses from
 Example:
 
 ```scala
-//opens an OutputStream to a new file and writes to it
+<<<<<<< HEAD
 val path1: Path = Path("/Users/zaphod/Documents/SpaceshipConfig.scala")
 val path2: Path = path1.sibling("HyperdriveConfig.scala")
 val path2Stream = path2.outputStream()
-PrintWriter(path2Stream).print()
+//write stuff to file...path2Stream is a Java NIO OutputStream
 path2Stream.close()
 ```
 
@@ -41,17 +41,12 @@ the PathSpec will look at disk to determine its membership, which it determines 
 Example:
 
 ```scala
-//prints two literals, based on the specification (in this case, a list)
 val pathLiterals = PathSpec(Path("/Users/zaphod"), Path("/Users/trillian"))
 for (path <- pathLiteral) {
-  println(path) 
+  println(path) //executes for each literal even if it isn't in the file system
 }
-
-//prints some literals, based on the specification (look at files one below
-//pathLiterals in the file tree, and filters out non-directories)
 val childrenDirectories = pathLiteral * PathMatcher(_.isDirectory())
 for (path <- pathLiteral) {
-  println(path)
+  println(path) //executes on paths that exist on disk and conform to the properties specified
 }
-
 ```
