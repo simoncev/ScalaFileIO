@@ -61,7 +61,7 @@ abstract class PathSpec extends Traversable[Path] with TraversableLike[Path, Pat
   /**Returns a PathSpec of the children who match the glob literal*/
   def /(literal: String): PathSpec = descendants(PathMatcher(literal), 1)
 
-  /**Returns the prefixes of p which are members of this (can include p).*/
+  /**Returns the prefixes of p which are members of this PathSpec (can include p).*/
   private[file] def ancestorsOf(p: Path): Set[Path]
 
   /**Returns the children who match this matcher*/
