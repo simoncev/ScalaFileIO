@@ -395,13 +395,14 @@ final class Path(val jpath: JPath) extends Equals with Ordered[Path] {
     * */
   def createDirectory(createParents: Boolean = true, failIfExists: Boolean = true,
                       attributes: TraversableOnce[FileAttribute[_]] = Nil): this.type = {
-    if(exists() && failIfExists)
+    val dirExists = exists()
+    if(dirExists && failIfExists)
       throw new IOException("Directory already exists")
     else if(isFile())
       throw new IOException("Path is a file hence cannot be created as a directory. Use createFile instead")
     if(createParents)
       createParentDirs()
-    if(nonExistent())
+    if(!dirExists)
       Files.createDirectory(jpath, attributes.toSeq:_*)
     this
   }
