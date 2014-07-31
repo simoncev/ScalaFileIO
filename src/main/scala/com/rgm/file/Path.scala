@@ -31,7 +31,7 @@ object Path {
       Path(Files.createTempFile(prefix, suffix, attributes.toArray: _*))
   }
 
-  /**Creates temp directory*/
+  /**Creates a temp directory*/
   def createTempDirectory(dir: Path = null, prefix: String = null,
                           attributes: TraversableOnce[FileAttribute[_]] = Nil): Path = {
     if (dir != null)
