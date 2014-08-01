@@ -39,3 +39,10 @@ trait PathMatcher {
  	def unary_! : PathMatcher = PathMatcher(!this.matches(_))
 }
 
+class FullPathMatcher extends PathMatcher {
+
+}
+
+class NamePathMatcher extends PathMatcher {
+
+}
