@@ -41,8 +41,13 @@ trait PathMatcher {
 
 class FullPathMatcher extends PathMatcher {
 
+  def matches(path: Path): Boolean
+
 }
 
 class NamePathMatcher extends PathMatcher {
+
+  def matches(path: Path): Boolean
+
 
 }
