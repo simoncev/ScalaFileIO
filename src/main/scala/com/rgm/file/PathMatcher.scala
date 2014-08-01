@@ -38,4 +38,11 @@ trait PathMatcher {
  	/** Returns a matcher that accepts a `Path` if it does not match `this` matcher. */
  	def unary_! : PathMatcher = PathMatcher(!this.matches(_))
 }
-
+//
+//class FullPathMatcher extends PathMatcher {
+//
+//}
+//
+//class NamePathMatcher extends PathMatcher {
+//
+//}
