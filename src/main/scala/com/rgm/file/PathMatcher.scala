@@ -11,16 +11,13 @@ object PathMatcher {
   implicit def fromJava(matcher: JPathMatcher): PathMatcher = new FunctionPathMatcher((p: Path) => matcher.matches(p.jpath))
 
   def apply(matcher: Path => Boolean): PathMatcher = new FunctionPathMatcher(matcher)
-  def apply(s: String): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("glob:" + s))
-  def apply(r: Regex): PathMatcher = fromJava(FileSystems.getDefault.getPathMatcher("regex:" + r))
-
+  def apply(s: String): PathMatcher = GlobNameMatcher(s)
+  def apply(r: Regex): PathMatcher = RegexNameMatcher(r)
   object All extends PathMatcher {
     def matches(path: Path): Boolean = true
   }
 
-  private class FunctionPathMatcher(matcher: Path => Boolean) extends PathMatcher {
-    def matches(path: Path): Boolean = matcher(path)
-  }
+
 }
 
 trait PathMatcher {
@@ -39,15 +36,52 @@ trait PathMatcher {
  	def unary_! : PathMatcher = PathMatcher(!this.matches(_))
 }
 
-class FullPathMatcher extends PathMatcher {
+class FunctionPathMatcher(matcher: Path => Boolean) extends PathMatcher {
+  def matches(path: Path): Boolean = matcher(path)
+}
 
-  def matches(path: Path): Boolean
+object RegexPathMatcher {
+  def apply(regex: Regex) = new RegexPathMatcher(regex)
+}
+
+class RegexPathMatcher(regex: Regex) extends PathMatcher {
+  val matcher = PathMatcher.fromJava(FileSystems.getDefault.getPathMatcher("regex:" + regex))
+
+  def matches(path: Path): Boolean = matcher.matches(path)
 
 }
 
-class NamePathMatcher extends PathMatcher {
+object RegexNameMatcher {
+  def apply(regex: Regex) = new RegexNameMatcher(regex)
 
-  def matches(path: Path): Boolean
+}
 
+class RegexNameMatcher(regex: Regex) extends PathMatcher {
+  val matcher = PathMatcher.fromJava(FileSystems.getDefault.getPathMatcher("regex:" + regex))
+
+  def matches(path: Path): Boolean = matcher.matches(path.name)
+
+}
+
+object GlobPathMatcher {
+  def apply(glob: String) = new GlobPathMatcher(glob)
+}
+
+class GlobPathMatcher(glob: String) extends PathMatcher {
+
+  val matcher = PathMatcher.fromJava(FileSystems.getDefault.getPathMatcher("glob:" + glob))
+
+  def matches(path: Path): Boolean = matcher.matches(path)
+}
+
+object GlobNameMatcher {
+  def apply(glob: String) = new GlobNameMatcher(glob)
+}
+
+class GlobNameMatcher(glob: String) extends PathMatcher {
+
+  val matcher = PathMatcher.fromJava(FileSystems.getDefault.getPathMatcher("glob:" + glob))
+
+  def matches(path: Path): Boolean = matcher.matches(path.name)
 
 }
