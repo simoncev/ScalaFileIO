@@ -42,10 +42,19 @@ class FunctionPathMatcher(matcher: Path => Boolean) extends PathMatcher {
   def matches(path: Path): Boolean = matcher(path)
 }
 
+object RegexPathMatcher {
+  def apply(regex: Regex) = new RegexPathMatcher(regex)
+}
+
 class RegexPathMatcher(regex: Regex) extends PathMatcher {
   val matcher = PathMatcher.fromJava(FileSystems.getDefault.getPathMatcher("regex:" + regex))
 
   def matches(path: Path): Boolean = matcher.matches(path)
+
+}
+
+object RegexNameMatcher {
+  def apply(regex: Regex) = new RegexNameMatcher(regex)
 
 }
 
@@ -56,20 +65,24 @@ class RegexNameMatcher(regex: Regex) extends PathMatcher {
 
 }
 
+object GlobPathMatcher {
+  def apply(glob: String) = new GlobPathMatcher(glob)
+}
+
 class GlobPathMatcher(glob: String) extends PathMatcher {
 
   val matcher = PathMatcher.fromJava(FileSystems.getDefault.getPathMatcher("glob:" + glob))
 
-  if (glob.contains(FileSystems.getDefault.getSeparator)) throw new IllegalArgumentException("Impossible to match a name with a pattern containing a file separator")
-
   def matches(path: Path): Boolean = matcher.matches(path)
+}
+
+object GlobNameMatcher {
+  def apply(glob: String) = new GlobNameMatcher(glob)
 }
 
 class GlobNameMatcher(glob: String) extends PathMatcher {
 
   val matcher = PathMatcher.fromJava(FileSystems.getDefault.getPathMatcher("glob:" + glob))
-
-  if (glob.contains(FileSystems.getDefault.getSeparator)) throw new IllegalArgumentException("Impossible to match a name with a pattern containing a file separator")
 
   def matches(path: Path): Boolean = matcher.matches(path.name)
 
