@@ -23,8 +23,8 @@ object PathMatcherSpec extends Properties("PathMatcher") {
   property("Can use regex to capture files of a given depth") =
     forAll(Gen.chooseNum(1,8), genPath) {(i: Int, p: Path) =>
       if (p.isAbsolute)
-        if (i < 2) true else!(("/" + ("[^/]*/" * (i - 2)) + "[^/]+").r.matches(p) ^ p.segmentCount == i)
+        if (i < 2) true else!(RegexPathMatcher(("/" + ("[^/]*/" * (i - 2)) + "[^/]+").r).matches(p) ^ p.segmentCount == i)
       else
-        !((("[^/]*/" * (i - 1)) + "[^/]*").r.matches(p) ^ p.segmentCount == i)
+        !(RegexPathMatcher((("[^/]*/" * (i - 1)) + "[^/]*").r).matches(p) ^ p.segmentCount == i)
     }
 }
