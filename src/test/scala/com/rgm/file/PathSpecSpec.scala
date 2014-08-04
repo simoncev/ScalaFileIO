@@ -115,7 +115,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   }
 
   it should "8. Apply filters built of globs to the elements it finds" in {
-    val matcher = PathMatcher(srcGlobal + "*.tmp")
+    val matcher = GlobPathMatcher(srcGlobal + "*.tmp")
     val pathSpec = PathSpec(Path(srcGlobal)) * matcher
     Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
     Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
@@ -139,11 +139,11 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
   it should "9. Chain several filters together to cherrypick a file" in {
     buildTmpFileTree
     val rootSet = PathSpec(Path(srcGlobal))
-    val complexSet = rootSet +++ (rootSet ** (PathMatcher(""".*dir[^\/]*""".r))) +++ (rootSet * allMatcher * PathMatcher(".*file.*".r))
+    val complexSet = rootSet +++ (rootSet ** (RegexPathMatcher(""".*dir[^\/]*""".r))) +++ (rootSet * allMatcher * RegexPathMatcher(".*file.*".r))
     var numTmps = 0
     complexSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 7)
-    val exclusionSet = complexSet --- (rootSet * allMatcher * PathMatcher(srcGlobal + "*/dir_3*"))
+    val exclusionSet = complexSet --- (rootSet * allMatcher * GlobPathMatcher(srcGlobal + "*/dir_3*"))
     numTmps = 0
     exclusionSet.foreach((p:Path) => numTmps+=1)
     assert(numTmps == 6)
@@ -223,7 +223,7 @@ class PathSpecSpec extends FlatSpec with FileSetupTeardown {
 
   it should "15. Use slash to build PathSpecs with globs" in {
     val matcher = PathMatcher(srcGlobal + "*.tmp")
-    val pathSpec = PathSpec(Path(srcGlobal)) / (srcGlobal + "*.tmp")
+    val pathSpec = PathSpec(Path(srcGlobal)) / "*.tmp"
     Path.createTempFile(Path(srcGlobal), "foo", ".tmp")
     Path.createTempFile(Path(srcGlobal), "bar", ".tmp")
     Path.createTempFile(Path(srcGlobal), "baz", ".scala")
