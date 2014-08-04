@@ -14,7 +14,7 @@ object PathMatcherSpec extends Properties("PathMatcher") {
   property("Implicit conversion from regex to PathMatcher") =
     forAll {(p: Path) => ".*".r.matches(p)}
 
-  property("FullPathMatcher only matches * with paths of one segment") =
+  property("GlobPathMatcher only matches * with paths of one segment") =
     forAll{(p: Path) => p.isAbsolute || (GlobPathMatcher("*").matches(p) == (p.segmentCount == 1))}
 
   property("Can use glob to find files with extensions") =
@@ -27,4 +27,13 @@ object PathMatcherSpec extends Properties("PathMatcher") {
       else
         !(RegexPathMatcher((("[^/]*/" * (i - 1)) + "[^/]*").r).matches(p) ^ p.segmentCount == i)
     }
+
+  property("GlobNameMatcher matches * with any path") =
+    forAll{(p: Path) => p.isAbsolute || (p.segmentCount == 0 ^ GlobNameMatcher("*").matches(p))}
+
+  property("RegexNameMatcher matches on the name, not the entire path") =
+    forAll(genPath, genLegalCharsString){(p: Path, s: String) => s.length == 0 || RegexNameMatcher(s.r).matches(p / Path(s))}
+
+
+
 }
