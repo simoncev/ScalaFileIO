@@ -14,8 +14,8 @@ object PathMatcherSpec extends Properties("PathMatcher") {
   property("Implicit conversion from regex to PathMatcher") =
     forAll {(p: Path) => ".*".r.matches(p)}
 
-  property("Implicit conversion from string to glob") =
-    forAll{(p: Path) => p.isAbsolute || ("*".matches(p) == (p.segmentCount == 1))}
+  property("FullPathMatcher only matches * with paths of one segment") =
+    forAll{(p: Path) => p.isAbsolute || (GlobPathMatcher("*").matches(p) == (p.segmentCount == 1))}
 
   property("Can use glob to find files with extensions") =
     forAll(genLegalString){(s: String) => s == ".." || "*?.*".matches(Path(s)) == (Path(s).extension != None)}
