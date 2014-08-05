@@ -34,6 +34,4 @@ object PathMatcherSpec extends Properties("PathMatcher") {
   property("RegexNameMatcher matches on the name, not the entire path") =
     forAll(genPath, genLegalCharsString){(p: Path, s: String) => s.length == 0 || RegexNameMatcher(s.r).matches(p / Path(s))}
 
-
-
 }
