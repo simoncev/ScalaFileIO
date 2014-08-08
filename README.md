@@ -1,4 +1,7 @@
+
 #By Suvamsh Shivaprasad and Tim Hausler
+#© RGM Advisors, LLC.
+
 #Overview
 
 A Scala file system API backed by Java NIO.2.  The motivation of the project was to replace the branch of
@@ -18,7 +21,6 @@ parentheses from
 Example:
 
 ```scala
-<<<<<<< HEAD
 val path1: Path = Path("/Users/zaphod/Documents/SpaceshipConfig.scala")
 val path2: Path = path1.sibling("HyperdriveConfig.scala")
 val path2Stream = path2.outputStream()
